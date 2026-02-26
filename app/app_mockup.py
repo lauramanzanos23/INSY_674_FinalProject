@@ -1,193 +1,156 @@
-#APP.PY
 import streamlit as st
 
-# -------------------------
-# Page config + minimal styling
-# -------------------------
-st.set_page_config(page_title="The Next Blockbuster", page_icon="🎬", layout="wide")
+# --- 1. PAGE SETUP & DESIGN ---
+st.set_page_config(page_title="Casting Sandbox", layout="wide")
 
-st.markdown(
-    """
+st.markdown("""
     <style>
-      .block-container {padding-top: 1.2rem; padding-bottom: 2rem;}
-      .card {
-        padding: 1.2rem 1.4rem;
-        border-radius: 18px;
-        background: rgba(255,255,255,0.04);
-        border: 1px solid rgba(255,255,255,0.10);
-      }
-      .hero {
-        padding: 1.2rem 1.4rem;
-        border-radius: 18px;
-        background: linear-gradient(135deg, rgba(120,30,60,0.35), rgba(20,20,40,0.35));
-        border: 1px solid rgba(255,255,255,0.10);
-      }
-      .subtle {opacity: 0.85;}
-      .label {
-        display:inline-block;
-        padding: 0.15rem 0.55rem;
-        border-radius: 999px;
-        background: rgba(255,255,255,0.06);
-        border: 1px solid rgba(255,255,255,0.10);
-        margin-right: 0.35rem;
-      }
-      .big {font-size: 2.2rem; font-weight: 800; line-height: 1;}
-      .small {font-size: 0.95rem; opacity: 0.9;}
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-# -------------------------
-# Mock predictor (no ML deps)
-# -------------------------
-def mock_predict(genre: str, actor_tier: str, runtime: int, release_month: int):
-    """
-    Returns:
-      hit_prob: 0..1
-      expected_popularity: 0..100 (mock)
-      explanation: list[str]
-    """
-    score = 0.35  # base
-    explanation = []
-
-    # Actor tier signal
-    tier_points = {"Unknown": 0.00, "Rising": 0.08, "Star": 0.18, "Superstar": 0.28}
-    score += tier_points.get(actor_tier, 0.0)
-    explanation.append(f"Actor tier: {actor_tier} ({tier_points.get(actor_tier, 0.0):+.2f})")
-
-    # Genre signal (purely illustrative)
-    genre_boost = {
-        "Action": 0.10, "Adventure": 0.08, "Animation": 0.09, "Comedy": 0.06,
-        "Drama": 0.03, "Horror": 0.07, "Thriller": 0.06, "Romance": 0.02,
-        "Science Fiction": 0.08, "Fantasy": 0.06, "Documentary": -0.02,
-        "Crime": 0.04, "Family": 0.04, "Mystery": 0.04, "History": 0.01,
-        "War": 0.00, "Western": -0.01, "Music": 0.00, "TV Movie": -0.03
+    .stApp { background-color: #0F1113; color: #FFFFFF; }
+    div[data-testid="stVerticalBlock"] > div:has(div.card-style) {
+        background-color: #1A1C1E; padding: 24px; border-radius: 12px; border: 1px solid #333; min-height: 450px;
     }
-    gb = genre_boost.get(genre, 0.0)
-    score += gb
-    explanation.append(f"Genre: {genre} ({gb:+.2f})")
+    /* Force dark background on inputs */
+    div[data-baseweb="select"] > div, div[data-testid="stTextInput"] input {
+        background-color: #1A1C1E !important; color: #FFFFFF !important; border: 1px solid #444 !important;
+    }
+    /* Active Button (Gold) vs Inactive (Dark) */
+    .stButton > button[kind="primary"] {
+        background-color: #D4AF37 !important; color: #000 !important; border: none !important;
+    }
+    .stButton > button {
+        background-color: #262730; color: #E0E0E0; border: 1px solid #444; border-radius: 20px;
+    }
+    .prediction-card {
+        background-color: #1A1C1E; border: 1px solid #D4AF37; padding: 20px; border-radius: 8px; text-align: center;
+    }
+    .gold-text { color: #D4AF37; font-weight: 700; }
+    .stProgress > div > div > div > div { background-color: #D4AF37 !important; }
+    </style>
+    """, unsafe_allow_html=True)
 
-    # Runtime sweet spot
-    if 95 <= runtime <= 135:
-        score += 0.06
-        explanation.append("Runtime in sweet spot 95–135 min (+0.06)")
-    elif runtime > 160:
-        score -= 0.04
-        explanation.append("Very long runtime >160 min (-0.04)")
+# --- 2. DATA & SESSION STATE ---
+DIRECTOR_DATA = {
+    "Christopher Nolan": {"genres": {"Sci-Fi": 10, "Action": 8, "Drama": 7, "Thriller": 9}, "baseline": 5.0},
+    "Greta Gerwig": {"genres": {"Sci-Fi": 4, "Action": 3, "Drama": 10, "Thriller": 5}, "baseline": 4.8},
+    "Denis Villeneuve": {"genres": {"Sci-Fi": 10, "Action": 7, "Drama": 8, "Thriller": 9}, "baseline": 4.9}
+}
+ACTOR_LIST = ["Zendaya", "Pedro Pascal", "Timothée Chalamet", "Viola Davis", "Cillian Murphy"]
+
+# Initialize States
+if 'director_locked' not in st.session_state: st.session_state.director_locked = False
+if 'selected_dir' not in st.session_state: st.session_state.selected_dir = None
+if 'locked_actors' not in st.session_state: st.session_state.locked_actors = []
+if 'active_genre' not in st.session_state: st.session_state.active_genre = "Sci-Fi"
+if 'active_lang' not in st.session_state: st.session_state.active_lang = "English"
+
+# --- 3. DYNAMIC PREDICTION LOGIC ---
+def calculate_hit_prob():
+    if not st.session_state.director_locked: return 0.0
+    
+    # Base from Director
+    score = DIRECTOR_DATA[st.session_state.selected_dir]["baseline"]
+    
+    # Impact of Actors (Weighted by count for POC)
+    score += (len(st.session_state.locked_actors) * 0.3)
+    
+    # Impact of Contextual Sandbox (Genre/Language Match)
+    if st.session_state.active_genre in ["Sci-Fi", "Action"]: score += 0.4
+    if st.session_state.active_lang != "English": score += 0.2
+    
+    return round(min(score, 9.9), 1)
+
+# --- 4. UI LAYOUT ---
+st.title("🎬 Casting Sandbox")
+st.caption("PREDICTIVE CAST OPTIMIZER")
+
+col1, col2, col3 = st.columns(3, gap="medium")
+
+# --- TASK 1: THE INTAKE ---
+with col1:
+    st.markdown('<div class="card-style">', unsafe_allow_html=True)
+    st.markdown("### 👥 The Intake")
+    
+    if not st.session_state.director_locked:
+        d_choice = st.selectbox("Search Director", options=[""] + list(DIRECTOR_DATA.keys()), label_visibility="collapsed")
+        if st.button("Lock Director 🔒", use_container_width=True) and d_choice:
+            st.session_state.selected_dir = d_choice
+            st.session_state.director_locked = True
+            st.rerun()
     else:
-        explanation.append("Runtime neutral (+0.00)")
-
-    # Seasonality (illustrative)
-    if release_month in [6, 7, 11, 12]:
-        score += 0.05
-        explanation.append("Release timing: peak season (+0.05)")
-    else:
-        explanation.append("Release timing: neutral (+0.00)")
-
-    # Clamp
-    hit_prob = max(0.05, min(0.95, score))
-
-    # Convert to an easy-to-read "expected popularity" mock scale
-    expected_popularity = 10 + hit_prob * 90
-
-    return hit_prob, expected_popularity, explanation
-
-def label_from_prob(p: float) -> str:
-    if p >= 0.75:
-        return "High Potential"
-    if p >= 0.55:
-        return "Promising"
-    if p >= 0.40:
-        return "Moderate"
-    return "High Risk"
-
-# -------------------------
-# Header
-# -------------------------
-st.markdown(
-    """
-    <div class="hero">
-      <div class="big">🎬 The Next Blockbuster</div>
-      <div class="small subtle">
-        Mock demo UI for a pre-release success predictor (genre + actor). Replace the scoring logic with your trained model later.
-      </div>
-      <div style="margin-top:0.6rem;">
-        <span class="label">Pre-release</span>
-        <span class="label">Business-oriented</span>
-        <span class="label">End-to-end pipeline</span>
-      </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
-st.write("")
-
-# -------------------------
-# Layout
-# -------------------------
-left, right = st.columns([1.05, 0.95], gap="large")
-
-with left:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("Input: movie concept")
-
-    genre = st.selectbox(
-        "Primary genre",
-        [
-            "Action", "Adventure", "Animation", "Comedy", "Crime", "Documentary", "Drama",
-            "Family", "Fantasy", "History", "Horror", "Music", "Mystery", "Romance",
-            "Science Fiction", "TV Movie", "Thriller", "War", "Western"
-        ],
-        index=0,
-        help="In the real system this becomes multi-hot genre features."
-    )
-
-    actor_tier = st.radio(
-        "Lead actor market tier (mock input)",
-        ["Unknown", "Rising", "Star", "Superstar"],
-        index=2,
-        horizontal=True,
-        help="Mock input for actor strength. In the real system this comes from TMDB actor popularity."
-    )
-
-    runtime = st.slider("Runtime (minutes)", 60, 220, 115, step=5)
-    release_month = st.select_slider("Release month", options=list(range(1, 13)), value=6)
-
-    st.caption("Note: This UI is dependency-free. Replace `mock_predict()` with your trained model later.")
-    run = st.button("Predict success", type="primary", use_container_width=True)
-    st.markdown("</div>", unsafe_allow_html=True)
-
-with right:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("Output: decision support")
-
-    if run:
-        p_hit, exp_pop, why = mock_predict(genre, actor_tier, runtime, release_month)
-        verdict = label_from_prob(p_hit)
-
-        st.metric("Hit probability", f"{p_hit:.0%}")
-        st.metric("Expected popularity (mock)", f"{exp_pop:.1f} / 100")
-        st.success(f"Recommendation: **{verdict}**")
-
-        st.write("**Drivers (explainable summary):**")
-        for w in why:
-            st.write(f"- {w}")
-
+        st.markdown(f"""<div style="background:#262730; padding:15px; border-radius:8px; border: 1px solid #D4AF37;">
+            <p style="margin:0; font-size:0.7rem; color:gray;">DIRECTOR</p>
+            <h4 style="margin:0;">{st.session_state.selected_dir}</h4></div>""", unsafe_allow_html=True)
+        
+        # Feature Vector
+        st.write("")
+        scores = DIRECTOR_DATA[st.session_state.selected_dir]["genres"]
+        fv1, fv2 = st.columns(2)
+        fv1.progress(scores["Sci-Fi"]/10, text=f"Sci-Fi: {scores['Sci-Fi']}")
+        fv2.progress(scores["Action"]/10, text=f"Action: {scores['Action']}")
+        
         st.divider()
-        st.write("**Suggested business action (example):**")
-        if p_hit >= 0.75:
-            st.write("Prioritize marketing and distribution planning early; consider premium release windows.")
-        elif p_hit >= 0.55:
-            st.write("Proceed with standard investment; run sensitivity checks on casting and release timing.")
-        else:
-            st.write("Treat as higher risk; explore alternative casting/genre positioning or reduce spend.")
+        st.write("**ADD ACTORS**")
+        a_choice = st.selectbox("Search Actor...", options=[""] + ACTOR_LIST, label_visibility="collapsed")
+        if st.button("Add Actor +", use_container_width=True) and a_choice:
+            if a_choice not in st.session_state.locked_actors:
+                st.session_state.locked_actors.append(a_choice)
+                st.rerun()
+        
+        if st.button("Reset Selection"):
+            st.session_state.director_locked = False
+            st.session_state.locked_actors = []
+            st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# --- TASK 2: CONTEXTUAL SANDBOX (Selectable Buttons) ---
+with col2:
+    st.markdown('<div class="card-style">', unsafe_allow_html=True)
+    st.markdown("### 🎛️ Contextual Sandbox")
+    
+    st.write("GENRE FOCUS")
+    genres = ["Sci-Fi", "Action", "Drama", "Thriller", "Comedy", "Indie"]
+    g_cols = st.columns(3)
+    for i, g in enumerate(genres):
+        # Set type to 'primary' if this genre is active
+        g_type = "primary" if st.session_state.active_genre == g else "secondary"
+        if g_cols[i % 3].button(g, key=f"g_{g}", type=g_type, use_container_width=True):
+            st.session_state.active_genre = g
+            st.rerun()
+            
+    st.write("LANGUAGES")
+    langs = ["English", "Spanish", "Mandarin", "French", "Korean", "Hindi"]
+    l_cols = st.columns(3)
+    for i, l in enumerate(langs):
+        l_type = "primary" if st.session_state.active_lang == l else "secondary"
+        if l_cols[i % 3].button(l, key=f"l_{l}", type=l_type, use_container_width=True):
+            st.session_state.active_lang = l
+            st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# --- TASK 3: RANK OPTIMIZER ---
+with col3:
+    st.markdown('<div class="card-style">', unsafe_allow_html=True)
+    st.markdown("### 📊 Rank Optimizer")
+    if not st.session_state.director_locked:
+        st.markdown("<div style='text-align:center; padding-top:100px; color:#555;'>Lock a director first...</div>", unsafe_allow_html=True)
     else:
-        st.info("Select inputs on the left and click **Predict success**.")
-        st.caption("This is a mock demo. No API calls and no ML models are used yet.")
+        for i, actor in enumerate(st.session_state.locked_actors):
+            st.markdown(f"<div style='background:#1A1C1E; border: 1px solid #444; padding:10px; border-radius:8px; margin-bottom:8px;'>#{i+1} | 👤 {actor}</div>", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown("</div>", unsafe_allow_html=True)
+# --- PREDICTION ENGINE (Bottom) ---
+st.divider()
+bot1, bot2, bot3 = st.columns([1, 1, 2])
+current_prob = calculate_hit_prob()
 
-st.write("")
-st.caption("© Demo UI for course project proposal — replace mock scoring with your trained regression/classification models.")
+with bot1:
+    baseline = DIRECTOR_DATA[st.session_state.selected_dir]["baseline"] if st.session_state.director_locked else 0.0
+    st.markdown(f'<div style="background:#1A1C1E; padding:20px; border-radius:8px; border:1px solid #333;"><small style="color:gray;">DIRECTOR BASELINE</small><h2 style="margin:0;">{baseline}</h2></div>', unsafe_allow_html=True)
+
+with bot2:
+    st.markdown(f'<div class="prediction-card"><small class="gold-text">CURRENT CONFIG</small><h2 style="margin:0;" class="gold-text">{current_prob if st.session_state.director_locked else "—"}</h2></div>', unsafe_allow_html=True)
+
+with bot3:
+    if st.session_state.director_locked:
+        diff = round(current_prob - baseline, 1)
+        st.markdown(f'<div style="background:#1A1C1E; padding:15px; border-radius:8px; border:1px solid #333; color:#4CAF50;">📈 +{diff} <span style="color:gray;">vs baseline</span></div>', unsafe_allow_html=True)

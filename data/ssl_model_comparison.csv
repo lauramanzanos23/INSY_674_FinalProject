@@ -1,0 +1,6 @@
+model_name,accuracy,macro_f1,notes
+SelfTraining (SSL),0.5547,0.5486,Pseudo-labeled: 3966 samples
+RandomForest (supervised),0.524,0.5197,Supervised baseline
+GradientBoosting (supervised),0.5067,0.5054,Supervised baseline
+LabelSpreading (SSL),0.428,0.4271,"kernel=knn, n_neighbors=10, No PCA"
+LabelPropagation (SSL),0.4261,0.4237,"kernel=knn, n_neighbors=10, No PCA"
