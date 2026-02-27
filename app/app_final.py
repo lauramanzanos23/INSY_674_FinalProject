@@ -191,14 +191,26 @@ GENRE_UI_TO_MODEL = {
 @st.cache_resource
 def load_artifacts():
     base = Path(__file__).resolve().parents[1] / "models"
-    with open(base / "popularity_best_model.pkl", "rb") as f:
-        pop_model = pickle.load(f)
-    with open(base / "ssl_best_model.pkl", "rb") as f:
-        ssl_model = pickle.load(f)
-    with open(base / "ssl_scaler.pkl", "rb") as f:
-        ssl_scaler = pickle.load(f)
-    with open(base / "model_metadata.pkl", "rb") as f:
-        metadata = pickle.load(f)
+    try:
+        with open(base / "popularity_best_model.pkl", "rb") as f:
+            pop_model = pickle.load(f)
+        with open(base / "ssl_best_model.pkl", "rb") as f:
+            ssl_model = pickle.load(f)
+        with open(base / "ssl_scaler.pkl", "rb") as f:
+            ssl_scaler = pickle.load(f)
+        with open(base / "model_metadata.pkl", "rb") as f:
+            metadata = pickle.load(f)
+    except ModuleNotFoundError as e:
+        st.error(
+            "Model artifact load failed due to a missing dependency in the deployment environment. "
+            f"Missing module: `{e.name}`."
+        )
+        st.info("Ensure `requirements.txt` includes all model libraries and redeploy the app.")
+        st.stop()
+    except Exception as e:
+        st.error(f"Model artifact load failed: {type(e).__name__}: {e}")
+        st.info("Try a clean redeploy and verify model files/version compatibility.")
+        st.stop()
     return pop_model, ssl_model, ssl_scaler, metadata
 
 
