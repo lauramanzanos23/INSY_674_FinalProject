@@ -121,10 +121,10 @@ keywords | 3238
 
 ### 4) The distribution of log target variable​
 #### Revenue
-
+<img width="515" height="402" alt="Image" src="https://github.com/user-attachments/assets/df0371d8-7b35-47ff-83a6-e1487734efff" />
 
 #### Popularity
-
+<img width="544" height="406" alt="Image" src="https://github.com/user-attachments/assets/8a3f3ece-52d7-4197-9ae8-f454e87d9f26" />
 
 ### 5) Correlation map
 
