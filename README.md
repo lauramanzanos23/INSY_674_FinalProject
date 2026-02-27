@@ -1,235 +1,209 @@
 # TMDB Movie Success Prediction Project
 
 ## Executive Summary
-1. Built an end-to-end TMDB-based pipeline to predict pre-release movie popularity (regression) and revenue tier (classification).
-2. Popularity modeling found strong signal vs baseline: best holdout model was XGBoost (`RMSE 4.185` vs baseline `5.061`, about 17% lower error).
-3. Stability checks showed split sensitivity: repeated CV favored Random Forest/Gradient Boosting over XGBoost, so reliability depends on validation strategy.
-4. Revenue-tier modeling showed semi-supervised learning value: SelfTraining (SSL) was best (`Macro F1 0.5486`, `Accuracy 0.5547`), outperforming supervised baselines.
-5. Explainability highlighted release timing, budget-related features, and talent popularity as major drivers; causal estimates suggest a positive `has_budget` association but are observational, not causal proof.
+This project delivers an end-to-end machine learning workflow to estimate movie success before release using TMDB-derived metadata.
 
-## Overview
-This repository is an end-to-end movie analytics project built on TMDB-style data to support pre-release decision making.
+It supports two prediction tasks:
+1. Popularity prediction (regression).
+2. Revenue tier prediction (semi-supervised classification: Low/Medium/High/Blockbuster).
 
-The project does five core things:
-1. Builds cleaned, engineered datasets from movie metadata.
-2. Predicts numeric movie popularity with supervised regression.
-3. Predicts revenue tiers with semi-supervised classification.
-4. Explains model behavior (feature importance + SHAP).
-5. Provides an interactive Streamlit app for scenario testing (cast/director/release setup).
+The final pipeline includes:
+1. Data extraction and enrichment from TMDB.
+2. Pre-release-safe feature engineering.
+3. Model comparison, cross-validation, and fine-tuning.
+4. Model export for app serving.
+5. Streamlit app (`app/app_final.py`) for scenario testing.
 
 ## Business Questions
 1. How popular is a movie likely to be before release?
-2. Which revenue tier is it likely to reach (Low/Medium/High/Blockbuster)?
-3. Which controllable factors (cast, timing, budget proxy variables) move those predictions?
-4. Does budget availability (`has_budget`) appear to be associated with higher popularity under observational assumptions?
+2. Which revenue tier is it likely to reach?
+3. Which pre-release factors (cast, director, timing, genre, budget proxy) drive outcomes?
+4. How do casting and release decisions change predicted results in what-if scenarios?
+
+## Repository Structure
+```text
+INSY 674 FinalProject/
+├── README.md
+├── PROJECT_STATUS_REPORT.md
+├── EDA/
+│   └── EDA.ipynb
+├── notebooks/
+│   ├── DataExtraction.ipynb
+│   └── FeatureEngineering.ipynb
+├── data/
+│   └── movies_2010_2025.csv
+├── models/
+│   ├── PopularityModelComparison.ipynb
+│   ├── SemiSupervisedModels.ipynb
+│   ├── SemiSupervisedModels_V2.ipynb
+│   └── export_best_models.py
+├── app/
+│   └── app_final.py
+└── src/
+```
 
 ## End-to-End Pipeline
-1. Data extraction and enrichment from TMDB-oriented sources.
-2. Data cleaning and feature engineering with pre-release constraints.
-3. Supervised popularity modeling and comparison.
-4. Semi-supervised revenue-tier modeling and comparison.
-5. Explainability and causal sensitivity analysis.
-6. Packaging best models for app inference.
+1. **Data extraction** (`notebooks/DataExtraction.ipynb`)
+   - Collects 2010-2025 movie records from TMDB-style endpoints.
+   - Enriches with cast, director, keywords, and metadata.
+   - Produces base dataset (`movies_2010_2025.csv`).
 
-Primary notebooks:
-1. `notebooks/DataExtraction.ipynb`
-2. `notebooks/FeatureEngineering.ipynb`
-3. `models/PopularityModelComparison.ipynb`
-4. `models/SemiSupervisedModels.ipynb`
+2. **Feature engineering** (`notebooks/FeatureEngineering.ipynb`)
+   - Creates a target-agnostic master table from pre-release features.
+   - Enforces leakage controls (post-release variables excluded from model feature sets).
+   - Handles zero-as-missing corrections for budget/revenue.
+   - Builds derived supervised and SSL datasets.
 
-## Data Artifacts
-Main artifacts in `data/`:
-1. `movies_2010_2025.csv`: enriched movie-level source table.
-2. `data_cleaned_engineered.csv`: cleaned/engineered base table.
-3. `data_features_master.csv`: feature master table.
-4. `data_supervised_popularity.csv`: supervised regression dataset.
-5. `data_ssl_revenue.csv`: semi-supervised revenue-tier dataset (`y_ssl` includes unlabeled rows as `-1`).
-6. `data_supervised_revenue.csv`: supervised revenue table.
+3. **Popularity modeling** (`models/PopularityModelComparison.ipynb`)
+   - Compares baseline, linear, tree ensemble, and boosting regressors.
+   - Uses holdout metrics plus cross-validation for robustness.
+   - Includes explainability (feature importance + SHAP) and tuning blocks.
 
-SSL output artifacts:
-1. `best_ssl_model.joblib`
-2. `ssl_scaler.joblib`
-3. `ssl_model_comparison.csv`
-4. `best_ssl_confusion_matrix.png`
+4. **Revenue-tier SSL modeling** (`models/SemiSupervisedModels_V2.ipynb`)
+   - Builds labeled + unlabeled setup for semi-supervised learning.
+   - Compares supervised and SSL classifiers.
+   - Selects best model by Macro F1 then Accuracy.
 
-## Features Used
-Features are designed to be available pre-release:
-1. Talent: director and top-cast popularity, cast aggregates, star count.
-2. Content/context: genres, language flags, keywords, overview length.
-3. Timing: release month/year/quarter, seasonality indicators.
-4. Production: runtime and budget-derived indicators.
+5. **Model packaging** (`models/export_best_models.py`)
+   - Trains/selects final popularity model using notebook-consistent policy.
+   - Loads best SSL artifacts and creates metadata used by app inference.
 
-Leakage controls are explicitly applied, especially in SSL where columns containing `vote`, `review`, `rating`, `popularity`, `revenue`, or `budget` are removed from candidate features.
+6. **Interactive app** (`app/app_final.py`)
+   - Loads exported models and metadata.
+   - Lets users lock director/cast and tune scenario inputs.
+   - Returns popularity estimate, revenue tier, confidence, and composite fit score.
 
-## Modeling Track 1: Popularity Regression
+## Datasets and Artifacts
+### Primary input
+1. `data/movies_2010_2025.csv`: original extracted movie dataset.
+
+### Generated datasets (pipeline outputs)
+1. `data/data_features_master.csv`
+2. `data/data_supervised_popularity.csv`
+3. `data/data_supervised_revenue.csv`
+4. `data/data_ssl_revenue.csv`
+
+### Model artifacts
+1. `models/popularity_best_model.pkl`
+2. `models/ssl_best_model.pkl`
+3. `models/ssl_scaler.pkl`
+4. `models/model_metadata.pkl`
+
+## Modeling Summary
+## 1) Popularity Regression
 Notebook: `models/PopularityModelComparison.ipynb`
 
-### Models Compared
-1. Dummy Mean (baseline)
+### Models compared
+1. Dummy Mean
 2. Linear Regression
 3. RidgeCV
 4. Random Forest
 5. Extra Trees
 6. Gradient Boosting
 7. Hist Gradient Boosting
-8. XGBoost (if installed)
-9. LightGBM (if installed)
+8. XGBoost
+9. LightGBM
 
-### Evaluation Setup
-1. Train/test split: 80/20 holdout.
-2. Metrics: MAE, RMSE, R2, MedAE, MAPE, Explained Variance, Max Error, NRMSE.
-3. Cross-validation: 3-fold CV RMSE for comparison.
-4. Additional robustness: repeated CV (5 folds x 2 repeats) on top holdout models.
+### Evaluation setup
+1. 80/20 holdout split.
+2. Metrics: RMSE, MAE, R2 (+ MedAE, MAPE, ExplainedVariance, MaxError, NRMSE).
+3. K-Fold CV (3-fold) for `CV_RMSE`.
+4. Repeated CV (5x2) for top-model stability.
+5. Target ablation: raw popularity vs `log1p(popularity)`.
+6. XGBoost RandomizedSearchCV fine-tuning block.
 
-### Key Results (from current notebook run)
-Holdout best model by RMSE: `XGBoost`.
+### Key reported results (current notebook outputs)
+1. Best raw-target holdout model: **XGBoost**
+   - RMSE `4.185`, MAE `1.626`, R2 `0.314`.
+2. Best log-target setting: **Gradient Boosting + log1p(popularity)**
+   - RMSE `3.507`, MAE `1.420`, R2 `0.519`.
+3. Fine-tuned XGBoost improved over baseline XGBoost on holdout:
+   - RMSE `4.149` vs `4.185`, MAE `1.570` vs `1.626`, R2 `0.326` vs `0.314`.
 
-Top holdout RMSE:
-1. XGBoost: `RMSE 4.185`, `MAE 1.626`, `R2 0.314`
-2. Gradient Boosting: `RMSE 4.431`, `R2 0.231`
-3. Random Forest: `RMSE 4.439`, `R2 0.228`
-4. Dummy Mean baseline: `RMSE 5.061`, `R2 -0.003`
+### Explainability
+1. Global importances and SHAP summaries are included.
+2. Top SHAP features (XGBoost view) include `release_year`, `log_budget`, `keyword_count`, and talent/timing variables.
 
-Interpretation:
-1. The model clearly beats baseline error, so pre-release features contain predictive signal.
-2. Absolute fit remains moderate (`R2 ~0.31`), meaning much variance is still unexplained.
-3. Target distribution is right-skewed with extreme outliers (max popularity `378`), which inflates RMSE and creates split sensitivity.
+## 2) Revenue Tier Semi-Supervised Classification
+Notebook: `models/SemiSupervisedModels_V2.ipynb`
 
-Repeated CV on top holdout candidates (stability check):
-1. Random Forest: `CV_RMSE_Mean 7.165`
-2. Gradient Boosting: `CV_RMSE_Mean 7.312`
-3. XGBoost: `CV_RMSE_Mean 7.630`, `CV_R2_Mean -0.020`
-
-Interpretation:
-1. XGBoost wins on the single holdout split but is less stable under repeated CV.
-2. Random Forest / Gradient Boosting appear more robust across folds.
-3. For production-like reliability, model selection should include stability criteria, not only one split.
-
-## Explainability (Popularity Model)
-Notebook section includes:
-1. Feature importance/coefficients for best model type.
-2. SHAP analysis (with XGBoost-safe native contribution fallback).
-
-Top SHAP features from current run:
-1. `release_year`
-2. `log_budget`
-3. `keyword_count`
-4. `revenue_missing_flag`
-5. `release_month`
-6. Actor/director popularity aggregates (`actor1_popularity`, `director_popularity`, `cast_pop_max`, etc.)
-
-Interpretation:
-1. Temporal effects and budget-related information are major drivers.
-2. Talent quality and metadata richness also contribute materially.
-
-## Observational Causal Analysis (Popularity Notebook)
-Treatment: `has_budget` (1 vs 0), using training split only.
-
-Estimators:
-1. IPW ATE
-2. Doubly Robust (AIPW-style) ATE with CI
-
-Current run:
-1. IPW ATE: `+0.403` popularity points
-2. Doubly Robust ATE: `+0.721` popularity points
-3. DR 95% CI: `[0.282, 1.161]`
-4. Propensity range: `[0.004, 0.999]`
-
-Interpretation and caveat:
-1. Estimated association is positive, but this is observational, not experimental causality.
-2. Logistic propensity model showed a convergence warning, so estimates should be treated as sensitivity evidence, not causal proof.
-
-## Modeling Track 2: Semi-Supervised Revenue Tier Classification
-Notebook: `models/SemiSupervisedModels.ipynb`
-
-### Target Definition
+### Target
 `y_ssl` classes:
 1. `0` = Low
 2. `1` = Medium
 3. `2` = High
 4. `3` = Blockbuster
-5. `-1` = unlabeled rows used for SSL training only
+5. `-1` = unlabeled rows (used in SSL training workflow)
 
-### Models Compared
-1. GradientBoosting (supervised baseline)
-2. RandomForest (supervised baseline)
-3. SelfTraining (SSL)
-4. LabelSpreading (SSL, graph-based)
-5. LabelPropagation (SSL, graph-based)
+### Model comparison
+1. Supervised baselines (e.g., GradientBoosting, RandomForest).
+2. SSL approaches (e.g., SelfTraining; graph-based methods depending on notebook section/version).
+3. Selection based on Macro F1 then Accuracy.
 
-### Evaluation Rule
-1. Primary metric: Macro F1.
-2. Tiebreaker: Accuracy.
-3. Held-out labeled test set is excluded from pseudo-labeling.
+### Reported comparison file
+`data/ssl_model_comparison.csv` stores final metric table for SSL run.
 
-### Key Results (from `data/ssl_model_comparison.csv`)
-1. SelfTraining (SSL): `Accuracy 0.5547`, `Macro F1 0.5486` (best)
-2. RandomForest (supervised): `Accuracy 0.5240`, `Macro F1 0.5197`
-3. GradientBoosting (supervised): `Accuracy 0.5067`, `Macro F1 0.5054`
-4. LabelSpreading (SSL): `Accuracy 0.4280`, `Macro F1 0.4271`
-5. LabelPropagation (SSL): `Accuracy 0.4261`, `Macro F1 0.4237`
+## App Overview (`app/app_final.py`)
+The final app is a casting sandbox for pre-release scenario analysis.
 
-Interpretation:
-1. SSL helped when using SelfTraining, outperforming both supervised baselines.
-2. Graph-based SSL underperformed in this feature space/configuration.
-3. Pseudo-labeling with a tree base learner appears to transfer unlabeled information better than KNN graph propagation here.
+### What users can do
+1. Select and lock a director.
+2. Select cast (up to 5 actors).
+3. Adjust genre, language, runtime, release year/month, keyword count, budget, and overview length.
+4. View model outputs:
+   - Predicted popularity (with percentile context vs training data).
+   - Predicted revenue tier + confidence.
+   - Composite casting fit score.
+5. Compare scenario score versus director baseline.
+6. Inspect top known-for movies from TMDB (with local fallback).
+7. View global feature-importance chart for popularity model.
 
-## Model Packaging and Serving
-Export script: `models/export_best_models.py`
-
-Script outputs in `models/`:
-1. `popularity_best_model.pkl` (XGBoost pipeline retrained on full popularity dataset)
-2. `ssl_best_model.pkl`
-3. `ssl_scaler.pkl`
-4. `model_metadata.pkl` (feature lists + tier labels)
-
-## Streamlit App
-App: `app/app_mockup2.py`
-
-What it does:
-1. Loads packaged popularity and SSL models.
-2. Recreates feature vectors from user-entered movie setup.
-3. Scores popularity and revenue-tier outcomes.
-4. Supports what-if testing for cast/director and release context.
-5. Displays baseline vs scenario deltas and class-probability diagnostics.
-6. Retrieves top movies for selected talent using TMDB first, local fallback second.
-
-TMDB settings:
-1. `TMDB_API_KEY` read from environment (fallback key exists in code).
-2. Base URL: `https://api.themoviedb.org/3`.
+### Inference notes
+1. Popularity model may be trained on `log1p` target; app applies `expm1` back-transform when metadata indicates it.
+2. SSL path uses exported scaler and feature list from metadata.
+3. Composite score in app is explicitly weighted:
+   - 65% popularity score
+   - 25% revenue tier score
+   - 10% confidence
 
 ## How to Run
-1. Refresh packaged models:
+## 1) Export models
 ```bash
 python models/export_best_models.py
 ```
 
-2. Launch app:
+## 2) Launch app
 ```bash
-streamlit run app/app_mockup2.py
+streamlit run app/app_final.py
 ```
 
-3. Reproduce notebook analyses:
-1. Run `models/PopularityModelComparison.ipynb`
-2. Run `models/SemiSupervisedModels.ipynb`
+## 3) Reproduce notebooks
+1. Run `notebooks/DataExtraction.ipynb`
+2. Run `notebooks/FeatureEngineering.ipynb`
+3. Run `models/PopularityModelComparison.ipynb`
+4. Run `models/SemiSupervisedModels_V2.ipynb`
 
-## Repository Layout
-1. `app/`: Streamlit application code.
-2. `data/`: datasets and saved model outputs.
-3. `models/`: modeling notebooks, export script, and packaged artifacts.
-4. `notebooks/`: extraction and feature engineering notebooks.
-5. `EDA/`: exploratory analysis notebooks.
-6. `src/`: support scripts (if present).
+## Environment
+Core libraries used:
+1. Python 3.x
+2. pandas, numpy
+3. scikit-learn
+4. xgboost, lightgbm (if available)
+5. shap (optional explainability)
+6. streamlit, altair
+7. joblib, pickle
+
+Optional env var:
+1. `TMDB_API_KEY` for live TMDB enrichment in app profile lookups.
 
 ## Limitations
-1. Results depend on TMDB data quality and coverage.
-2. Popularity target is heavy-tailed, increasing variance and split sensitivity.
-3. Causal section is observational and assumes no unobserved confounding.
-4. App predictions are decision-support signals, not guarantees.
+1. Model quality depends on TMDB coverage and data quality.
+2. Targets are heavy-tailed and noisy; performance varies by split strategy.
+3. Some app lookups rely on TMDB availability/network.
+4. Causal-style analyses in notebooks are observational and not causal proof.
 
-## Recommended Next Steps
-1. Add temporal cross-validation to reduce optimism from random splits.
-2. Tune and calibrate the SSL classifier probabilities.
-3. Add regression prediction intervals and uncertainty flags in the app.
-4. Improve causal robustness checks (alternative propensity/outcome models, trimming/sensitivity analysis).
-5. Move TMDB API key fully to environment-only configuration.
+## Next Improvements
+1. Add strict temporal CV for all final model selection decisions.
+2. Add uncertainty intervals/calibration in app output.
+3. Version artifact schema to prevent model-metadata mismatch.
+4. Add automated tests for feature-row construction parity between training and app inference.
