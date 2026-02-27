@@ -911,19 +911,13 @@ else:
     pop_margin = max(1.5, 0.08 * abs(pop_display))
     pop_low = max(0.0, float(pop_display) - pop_margin)
     pop_high = float(pop_display) + pop_margin
-    diff = round(current_prob - baseline, 1)
-    direction = "improvement" if diff > 0 else ("decline" if diff < 0 else "no change")
-
     st.markdown(
         f"<div style='background:#1A1C1E; border:1px solid #444; padding:12px; border-radius:8px;'>"
         f"<small style='color:gray;'>PREDICTION SUMMARY</small><br>"
-        f"Casting Fit Score (0-10): <span class='gold-text'>{current_prob:.1f}</span> "
-        f"(<span class='gold-text'>{diff:+.1f}</span> vs director baseline, {direction})<br>"
         f"Predicted popularity: <span class='gold-text'>{pop_display:.1f}</span> "
         f"(higher than <span class='gold-text'>{pop_pct:.1f}%</span> of training movies)<br>"
         f"Revenue outlook: <span class='gold-text'>{tier_map.get(p['tier_pred'], 'N/A')}</span> "
-        f"with <span class='gold-text'>{_confidence_label(conf)} confidence ({conf:.0%})</span><br>"
-        f"<small style='color:gray;'>Custom model index = 65% popularity + 25% revenue tier + 10% confidence.</small></div>",
+        f"with <span class='gold-text'>{_confidence_label(conf)} confidence ({conf:.0%})</span></div>",
         unsafe_allow_html=True,
     )
 
