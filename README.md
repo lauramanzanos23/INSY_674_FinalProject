@@ -131,7 +131,7 @@ keywords | 3238
 
 ### 6) Genres and Talent ranking
 #### Genres
-<img width="539" height="413" alt="Image" src="https://github.com/user-attachments/assets/5f6e4210-10bf-45fd-9911-183f503380e1" />
+<img width="592" height="401" alt="Image" src="https://github.com/user-attachments/assets/73a2e91b-f1eb-45cf-ac4c-e7b8cad0a9eb" />
 
 #### Ranking Director popularity​
 Ranking | Director Name | Director Popularity
