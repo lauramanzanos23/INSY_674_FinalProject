@@ -188,7 +188,7 @@ Core libraries used:
 1. Python 3.x
 2. pandas, numpy
 3. scikit-learn
-4. xgboost, lightgbm (if available)
+4. xgboost, lightgbm 
 5. shap (optional explainability)
 6. streamlit, altair
 7. joblib, pickle

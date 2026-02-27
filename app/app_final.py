@@ -927,7 +927,7 @@ else:
         unsafe_allow_html=True,
     )
 
-    chart_left, chart_right = st.columns(2, gap="small")
+    chart_left = st.container()
 
     with chart_left:
         st.write("### Actor and Director Popularity")
@@ -954,21 +954,4 @@ else:
         )
         st.altair_chart(pop_chart, use_container_width=True)
 
-    with chart_right:
-        st.write("### Feature Importance (Global Popularity Model)")
-        fi_df = _feature_importance_df().head(12)
-        if fi_df.empty:
-            st.info("Feature importance not available for the current model type.")
-        else:
-            fi_chart = (
-                alt.Chart(fi_df)
-                .mark_bar(color="#d4af37")
-                .encode(
-                    x=alt.X("Feature:N", sort=None, axis=alt.Axis(labelAngle=-35, labelLimit=120, title=None)),
-                    y=alt.Y("Importance:Q", title="Importance"),
-                    tooltip=["Feature", alt.Tooltip("Importance:Q", format=".4f")],
-                )
-                .properties(height=170)
-            )
-            st.altair_chart(fi_chart, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
