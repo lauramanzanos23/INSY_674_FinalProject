@@ -89,6 +89,63 @@ INSY 674 FinalProject/
 3. `models/ssl_scaler.pkl`
 4. `models/model_metadata.pkl`
 
+## Exploratory Data Analysis
+### 1) Data Overview
+1. Total movies: 9290
+2. Labeled rows (revenue known):2604
+3. Total feature: 52
+
+### 2) Raw features
+Groups | Categorical variables​ | Numerous variable​s 
+--- | --- | --- 
+Feature name | Title, ​Release date, Original language,​ Status, overview,​Genres, Keywords,​ Director name,​ Director department,​ Actor(1~5) name,​ Actor(1~5) character​ | Runtime, ​Popularity, ​Vote average, ​Vote count, Budget, ​Revenue, ​Director id, ​Director gender, Director Popularity,​ Actor(1~5) id, Actor(1~5) gender, Cast pop mean, Cast pop max​
+
+### 3) Missing Value
+Features name | Number of missing values
+--- | --- 
+runtime | 457
+--- | --- 
+Vote average | 1642
+--- | --- 
+Vote Count | 1640
+--- | --- 
+budget | 6527
+--- | --- 
+revenue | 6686
+--- | --- 
+cast_pop_mean | 222
+--- | --- 
+cast_pop_max | 222
+--- | --- 
+director_gender | 2285
+--- | --- 
+Missing_actor1 | 225
+--- | --- 
+Missing_actor2 | 384
+--- | --- 
+Missing_actor3 | 681
+--- | --- 
+Missing_actor4 | 1036
+--- | --- 
+Missing_actor5 | 1479
+--- | --- 
+genres | 489
+--- | --- 
+keywords | 3238
+
+### 4) The distribution of log target variable​
+#### Revenue
+
+
+#### Popularity
+
+
+### 5) Correlation map
+
+
+### 6) Talent ranking
+#### Ranking Director popularity​
+
 ## Modeling Summary
 ## 1) Popularity Regression
 Notebook: `models/PopularityModelComparison.ipynb`
