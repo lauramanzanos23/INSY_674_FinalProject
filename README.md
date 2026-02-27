@@ -127,10 +127,54 @@ keywords | 3238
 <img width="544" height="406" alt="Image" src="https://github.com/user-attachments/assets/8a3f3ece-52d7-4197-9ae8-f454e87d9f26" />
 
 ### 5) Correlation map
+<img width="1004" height="703" alt="Image" src="https://github.com/user-attachments/assets/90f7900e-9ca6-4d44-a882-16c38b4270d5" />
 
+### 6) Genres and Talent ranking
+#### Genres
+<img width="539" height="413" alt="Image" src="https://github.com/user-attachments/assets/5f6e4210-10bf-45fd-9911-183f503380e1" />
 
-### 6) Talent ranking
 #### Ranking Director popularity​
+Ranking | Director Name | Director Popularity
+--- | --- | ---
+1 | Jackie Chan | 20.8778
+2 | Tom Hanks | 15.8630
+3 | Ben Affleck | 12.3544
+4 | Angelina Jolie | 10.9173
+5 | Sylvester Stallone | 10.5039
+6 | Andrew McCarthy | 9.1435
+7 | Christopher Nolan | 8.2813
+8 | Denzel Washington | 8.2672
+9 | Aditya Dhar | 8.0828
+10 | Pascal Cervo | 8.0077
+
+
+#### Ranking actor popularity​
+Ranking | Actor Name | Actor Popularity
+--- | --- | ---
+1 | Kayden Kross | 224.1500
+2 | Evelyn Claire | 145.2190
+3 | Chanel Preston | 88.1540
+4 | Akiho Yoshizawa | 85.4980
+5 | Rosa Caracciolo | 75.3990
+6 | Mia Malkova | 42.7140
+7 | Sydney Sweeney | 42.2737
+8 | Rocco Siffredi | 38.1250
+9 |  Alexis Texas | 37.0830
+10 | Blair Williams | 31.6300
+
+#### Ranking actor appearance ​
+Ranking | Actor Name | Actor Appearance
+--- | --- | ---
+1 | Mark Wahlberg | 28
+2 | Eric Roberts | 27
+3 | Samuel L. Jackson | 26
+4 | Liam Neeson | 25
+5 | Scarlett Johansson | 25
+6 | Woody Harrelson | 25
+7 | Ryan Reynolds | 24
+8 | Josh Brolin | 23
+9 | Tom Hanks | 23
+10 | Jake Gyllenhaal | 22
 
 ## Modeling Summary
 ## 1) Popularity Regression
