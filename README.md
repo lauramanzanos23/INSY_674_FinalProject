@@ -102,6 +102,7 @@ Feature name | Title, ​Release date, Original language,​ Status, overview,�
 
 ### 3) Missing Value
 Features name | Number of missing values
+--- | ---
 runtime | 457
 Vote average | 1642
 Vote Count | 1640
