@@ -1,7 +1,7 @@
 # The Next Blockbuster
 Predicting Movie Success Using Pre-Release Data
 
-Group 1: Maria Jose Beletanga, Laura Manzanos, Emmanuel Okerein, Hank Shao, Ibukun Adeleye
+Group 1: Laura Manzanos Zuriarrain, Maria Jose Beletanga, Emmanuel Okerein, Hank Shao, Ibukun Adeleye
 
 This repository implements an end-to-end data science and ML workflow to estimate movie outcomes before release using TMDB-derived metadata.
 
@@ -271,7 +271,7 @@ In `models/PopularityModelComparison.ipynb`:
 
 Cross-validation and fine tuning:
 1. CV used in model comparison (KFold, 3 folds) with CV_RMSE.
-2. Repeated CV (5x2) stability check on top models.
+2. Repeated CV (5x2) stability check on the selected final log-target model.
 3. RandomizedSearchCV used for XGBoost.
 
 ---
@@ -323,7 +323,7 @@ Model Evaluation:
 1. Train/validation/holdout strategy with CV checks.
 2. Metrics aligned to task and business interpretability.
 
-**Results**
+**Results (from notebooks in `models/`)**
 Popularity prediction (regression):
 - Best raw-target model: XGBoost.
 - Best final model: Gradient Boosting with `log1p(popularity)`.
