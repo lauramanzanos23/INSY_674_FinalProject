@@ -14,26 +14,24 @@ Primary decision support goals:
 
 **Context and Motivation**
 - 80% of films do not have strong ROI despite high production costs (Forbes, 2019).
-- We help production companies identify the right combination of financial, talent, and creative investment that drives popularity and revenue.
+- This project helps production teams identify pre-release signals that drive popularity and revenue.
 
 **Who Can Use This**
-1. Studio Executive: allocates budgets based on experience and relationships.
-2. Casting Director: needs reliable signals for cast shortlisting decisions.
-3. Independent Producer: one poor casting decision can break the project.
-4. Production Data Analyst: needs a unified dashboard for scenario testing.
+1. Studio Executive: budget and greenlight decisions.
+2. Casting Director: cast shortlisting with ROI signals.
+3. Independent Producer: reduce high-cost casting risk.
+4. Production Data Analyst: scenario testing and decision support.
 
 **Data Source**
-- Source: The Movie Database (TMDB) official API.
-- Period: 2010–2025.
-- Entities used: Movies, top-billed cast, directors.
-- TMDB popularity used as a proxy for audience interest.
-- Data collected via authenticated API calls.
+- The Movie Database (TMDB) official API, 2010–2025.
+- Entities: Movies, top-billed cast, directors.
+- TMDB popularity as a proxy for audience interest.
 
 **End-to-End Process**
 1. Build a clean and enriched dataset with pre-release features.
 2. Train and evaluate supervised models for popularity prediction.
 3. Train and evaluate semi-supervised models for revenue-tier prediction.
-4. Compare model performance with robust metrics (RMSE for popularity, macro-F1 for revenue tiers).
+4. Compare model performance with robust metrics.
 5. Export best-performing models for integration into a decision-support app.
 
 ---
@@ -156,28 +154,9 @@ Popularity
 Genres
 <img width="592" height="401" alt="Image" src="https://github.com/user-attachments/assets/73a2e91b-f1eb-45cf-ac4c-e7b8cad0a9eb" />
 
-Top directors by popularity (sample from EDA):
-| Rank | Director | Popularity |
-|---|---|---:|
-| 1 | Jackie Chan | 20.8778 |
-| 2 | Tom Hanks | 15.8630 |
-| 3 | Ben Affleck | 12.3544 |
-| 4 | Angelina Jolie | 10.9173 |
-| 5 | Sylvester Stallone | 10.5039 |
-
-Top actors by popularity (sample from EDA):
-| Rank | Actor | Popularity |
-|---|---|---:|
-| 1 | Kayden Kross | 224.1500 |
-| 2 | Evelyn Claire | 145.2190 |
-| 3 | Chanel Preston | 88.1540 |
-| 4 | Akiho Yoshizawa | 85.4980 |
-| 5 | Rosa Caracciolo | 75.3990 |
-
 Talent ranking rationale:
-- Directors are ranked by TMDB popularity to validate `director_popularity` as a real pre-release signal.
-- Actors are ranked by appearance count to show prolific actors are recurring, learnable patterns in the data.
-- Actors are also ranked by raw popularity score, which feeds `actor1–5_popularity`, `cast_pop_mean`, `cast_pop_max`, and `star_count`. Popularity score and prolificacy are distinct signals that both matter.
+- Directors ranked by TMDB popularity validate `director_popularity` as a real pre-release signal.
+- Actor popularity and appearance frequency capture distinct signals (star power vs prolificacy).
 
 ---
 
@@ -441,3 +420,8 @@ Current app outputs:
 2. Revenue outlook with confidence.
 3. Actor/director popularity chart.
 4. TMDB known-for movie panels (with fallback to dataset summaries).
+
+---
+
+**Key Files**
+1. `notebooks/DataExtraction.ipynb`: TMDB ingestion.\n2. `notebooks/FeatureEngineering.ipynb`: feature pipeline.\n3. `models/PopularityModelComparison.ipynb`: supervised modeling.\n4. `models/SemiSupervisedModels_V2.ipynb`: SSL modeling.\n5. `models/export_best_models.py`: model export for app usage.
