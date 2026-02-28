@@ -1,4 +1,7 @@
-# TMDB Movie Success Prediction Project
+# The Next Blockbuster
+Predicting Movie Success Using Pre-Release Data
+
+Group 1: Maria Jose Beletanga, Laura Manzanos, Emmanuel Okerein, Hank Shao, Ibukun Adeleye
 
 This repository implements an end-to-end data science and ML workflow to estimate movie outcomes before release using TMDB-derived metadata.
 
@@ -6,6 +9,34 @@ Primary decision support goals:
 1. Predict expected movie popularity.
 2. Predict revenue tier (Low, Medium, High, Blockbuster) with semi-supervised learning.
 3. Support pre-release what-if decisions in a Streamlit app.
+
+---
+
+**Context and Motivation**
+- 80% of films do not have strong ROI despite high production costs (Forbes, 2019).
+- We help production companies identify the right combination of financial, talent, and creative investment that drives popularity and revenue.
+
+**Who Can Use This**
+1. Studio Executive: allocates budgets based on experience and relationships.
+2. Casting Director: needs reliable signals for cast shortlisting decisions.
+3. Independent Producer: one poor casting decision can break the project.
+4. Production Data Analyst: needs a unified dashboard for scenario testing.
+
+**Data Source**
+- Source: The Movie Database (TMDB) official API.
+- Period: 2010–2025.
+- Entities used: Movies, top-billed cast, directors.
+- TMDB popularity used as a proxy for audience interest.
+- Data collected via authenticated API calls.
+
+**End-to-End Process**
+1. Build a clean and enriched dataset with pre-release features.
+2. Train and evaluate supervised models for popularity prediction.
+3. Train and evaluate semi-supervised models for revenue-tier prediction.
+4. Compare model performance with robust metrics (RMSE for popularity, macro-F1 for revenue tiers).
+5. Export best-performing models for integration into a decision-support app.
+
+---
 
 **Repository Structure**
 ```text
@@ -143,19 +174,37 @@ Top actors by popularity (sample from EDA):
 | 4 | Akiho Yoshizawa | 85.4980 |
 | 5 | Rosa Caracciolo | 75.3990 |
 
+Talent ranking rationale:
+- Directors are ranked by TMDB popularity to validate `director_popularity` as a real pre-release signal.
+- Actors are ranked by appearance count to show prolific actors are recurring, learnable patterns in the data.
+- Actors are also ranked by raw popularity score, which feeds `actor1–5_popularity`, `cast_pop_mean`, `cast_pop_max`, and `star_count`. Popularity score and prolificacy are distinct signals that both matter.
+
 ---
 
 **5.4 Data Preparation**
 Notebook:
 1. `notebooks/FeatureEngineering.ipynb`
 
-Preparation strategy:
-1. Parse and standardize genres/languages.
-2. Build cast and director aggregate features.
-3. Add release timing features (`release_month`, `release_quarter`, seasonal flags).
-4. Add missingness indicators for budget/revenue and safe budget transforms (`has_budget`, `log_budget`).
-5. Build text-derived proxies (`keyword_count`, `has_overview`, `overview_length`).
-6. Enforce leakage-safe feature sets for pre-release prediction.
+Guiding principles:
+1. Target-agnostic master dataset: all features + raw targets kept together.
+2. Zero correction: budget and revenue = 0 treated as missing, not true $0.
+3. No data leakage: post-release metrics excluded from feature matrices.
+4. Semi-supervised ready: unlabeled rows kept as `y = -1`.
+5. Revenue tiers: quantile-based bins from labeled data only.
+
+Feature categories:
+1. Content: genre multi-hot encoding, keyword count, language flags.
+2. Talent: cast & director popularity, star power, gender ratios.
+3. Production: budget (log-transformed), runtime, overview signals.
+4. Temporal: release month, year, quarter, summer/holiday flags.
+
+Key engineered features:
+1. `star_count`: number of actors above 75th-percentile popularity.
+2. `cast_popularity_std`: spread of top-5 actor popularities.
+3. `cast_gender_ratio`: percent female in top-5 billed cast.
+4. `genre_*` (19 binary): multi-hot genre encoding.
+5. `is_summer_release`, `is_holiday_release`: seasonal blockbuster flags.
+6. `log_budget`: log1p-transformed budget (missing treated as unknown, not $0).
 
 Generated datasets:
 1. `data/data_features_master.csv`
@@ -172,23 +221,29 @@ Popularity notebook:
 Revenue-tier notebook:
 1. `models/SemiSupervisedModels_V2.ipynb`
 
-Model families used:
-1. Regression: Dummy, Linear, Ridge, Random Forest, Extra Trees, Gradient Boosting, Hist Gradient Boosting, XGBoost, LightGBM (availability-dependent).
-2. Semi-supervised classification: supervised baselines + SSL approaches on partially labeled target.
+Regression models:
+1. Dummy, Linear Regression, RidgeCV.
+2. Random Forest, Extra Trees, Gradient Boosting, HistGradientBoosting.
+3. XGBoost, LightGBM (availability-dependent).
+
+Semi-supervised models:
+1. Self Training with tuned Random Forest base estimator.
+2. Label Spreading (KNN graph).
+3. Label Propagation (KNN graph).
 
 ---
 
 **5.6 Model Evaluation**
 Evaluation setup (popularity):
-1. Train/holdout split (80/20).
+1. Train/holdout split (80/20 on labeled data only).
 2. Cross-validation + repeated CV stability checks.
-3. Metrics: RMSE, MAE, R2 (plus additional diagnostics in notebook).
+3. Metrics: RMSE, MAE, R2, plus diagnostics in notebook.
 4. Ablation: raw target vs `log1p(popularity)` with back-transform (`expm1`) for comparable scale.
 
 Evaluation setup (revenue tier):
-1. Class metrics with focus on macro quality (Macro F1).
-2. Confusion matrix diagnostics.
-3. Selection among SSL candidates by performance and robustness.
+1. Train/holdout split (80/20 on labeled data only, stratified).
+2. Metrics: macro F1 (primary), accuracy, precision, recall.
+3. Confusion matrix diagnostics.
 
 ---
 
@@ -198,7 +253,7 @@ Selection logic implemented in exporter:
 
 Current exported models used by app:
 1. Popularity model: Gradient Boosting with `log1p` target transform.
-2. Revenue-tier model: best available SSL model from `SemiSupervisedModels_V2` artifacts.
+2. Revenue-tier model: best available SSL model from `SemiSupervisedModels_V2`.
 
 Exported artifacts:
 1. `models/popularity_best_model.pkl`
@@ -213,6 +268,11 @@ In `models/PopularityModelComparison.ipynb`:
 1. Hyperparameter tuning blocks exist.
 2. Final model section includes repeated CV and targeted fine-tuning for the selected best log-target model.
 3. SHAP explainability block added for selected final model.
+
+Cross-validation and fine tuning:
+1. CV used in model comparison (KFold, 3 folds) with CV_RMSE.
+2. Repeated CV (5x2) stability check on top models.
+3. RandomizedSearchCV used for XGBoost.
 
 ---
 
@@ -275,7 +335,7 @@ Holdout metrics (original popularity scale):
 | Best log1p target (final) | Gradient Boosting | 3.5067 | 1.4196 | 0.5186 |
 
 Revenue tier prediction (semi-supervised):
-- Best model: SelfTraining (SSL) with tuned RandomForest base estimator.
+- Best model: SelfTraining (SSL) with tuned Random Forest base estimator.
 - Primary metric: Macro F1 on held-out labeled test set.
 
 Comparison (held-out labeled test set):
@@ -292,7 +352,7 @@ Explainability included in popularity notebook:
 1. Global feature importance plots.
 2. SHAP summary plots (final selected model).
 
-**Important Graphs**
+**Important Visualizations**
 Popularity distribution
 ![Popularity distribution](docs/figures/PopularityModelComparison_files/PopularityModelComparison_7_0.png)
 
@@ -311,7 +371,7 @@ Final model SHAP summary
 Best SSL confusion matrix
 ![SSL confusion matrix](docs/figures/SemiSupervisedModels_V2_files/SemiSupervisedModels_V2_41_1.png)
 
-**Threats to Validity (Slide 37)**
+**Threats to Validity**
 
 Data & Distribution
 - TMDB may not represent all markets or distribution channels.
@@ -329,7 +389,7 @@ Interpretation & Deployment
 - Results reflect associations, not causal effects.
 - Production deployment requires monitoring and drift control.
 
-**Conclusion (Slide 38)**
+**Conclusion**
 - Pre-release metadata contains meaningful predictive signal for both popularity and revenue tier.
 - Supervised models significantly outperform baseline error for popularity prediction.
 - Semi-supervised Self Training achieved the best F1 for revenue tiers, improving over the best supervised model.
@@ -345,7 +405,7 @@ Next Steps
 - Add temporal CV as required model-selection criterion.
 - Add uncertainty intervals and drift monitoring in production.
 
-**Lessons Learned (Slide 39)**
+**Lessons Learned**
 - Semi-supervised learning adds value when labels are scarce.
 - Feature engineering matters more than model complexity alone.
 - AI is a tool, not a replacement for reasoning.
