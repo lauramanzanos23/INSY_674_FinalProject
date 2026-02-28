@@ -1,202 +1,133 @@
-# 📊 Project Status Report — TMDB "The Next Blockbuster"
+# 📊 Project Status Report — TMDB Movies (INSY 674)
 
-**Report Date:** February 19, 2026  
-**Repository:** [github.com/lauramanzanos23/TMDB-Movies-INSY-674](https://github.com/lauramanzanos23/TMDB-Movies-INSY-674)  
-**Course:** INSY 674
+**Report Date:** February 27, 2026  
+**Scope:** Current status based on files and folders present in this repository workspace.
 
 ---
 
 ## 1. Project Overview
 
-This project builds an **end-to-end machine learning pipeline** to predict movie success **before release** using data from The Movie Database (TMDB) API. The pipeline covers data extraction, cleaning, feature engineering, exploratory data analysis, and a Streamlit-based UI prototype.
+This project builds an end-to-end movie analytics workflow to support pre-release decision making with TMDB-based data.
 
-**Business Goal:** Help studios and streaming platforms estimate whether a movie will be a "hit" and forecast expected popularity, based only on pre-release attributes (cast, director, genre, runtime, etc.).
+Current implemented flow:
+- Data extraction and enrichment
+- Feature engineering and EDA
+- Supervised popularity modeling
+- Semi-supervised revenue-tier modeling
+- Model export and Streamlit mockup app
 
 ---
 
-## 2. Repository Structure
+## 2. Current Repository Structure
 
 ```
 TMDB-Movies-INSY-674/
-├── README.md                           # Project overview & documentation
-├── PROJECT_STATUS_REPORT.md            # This report
+├── README.md
+├── PROJECT_STATUS_REPORT.md
 ├── app/
-│   └── app_mockup.py                   # Streamlit UI prototype
+│   ├── app_mockup.py
+│   └── app_mockup2.py
 ├── data/
-│   ├── movies_2010_2025.csv            # Raw extracted dataset
-│   ├── data_cleaned_engineered.csv     # Cleaned + feature-engineered dataset
-│   ├── data_advanced_features.csv      # (branch) Advanced features dataset
-│   ├── data_quality_validated.csv      # (branch) Quality-validated dataset
-│   └── data_semi_supervised_predictions.csv # (branch) Model predictions
+│   ├── movies_2010_2025.csv
+│   ├── data_cleaned_engineered.csv
+│   ├── data_features_master.csv
+│   ├── data_supervised_popularity.csv
+│   ├── data_supervised_revenue.csv
+│   ├── data_ssl_revenue.csv
+│   ├── best_ssl_model.joblib
+│   ├── ssl_scaler.joblib
+│   ├── ssl_model_comparison.csv
+│   ├── best_ssl_confusion_matrix.png
+│   └── best_ssl_confusion_matrix_pct.png
 ├── EDA/
-│   └── EDA.ipynb                       # Exploratory Data Analysis notebook
+│   └── EDA.ipynb
+├── models/
+│   ├── PopularityModelComparison.ipynb
+│   ├── SemiSupervisedModels.ipynb
+│   ├── SemiSupervisedModels_V2.ipynb
+│   ├── export_best_models.py
+│   ├── popularity_best_model.pkl
+│   ├── ssl_best_model.pkl
+│   ├── ssl_scaler.pkl
+│   └── model_metadata.pkl
 └── notebooks/
-    ├── DataExtraction.ipynb            # TMDB API data extraction pipeline
-    ├── FeatureEngineering.ipynb        # Base feature engineering & cleaning
-    ├── AdvancedFeatureEngineering.ipynb # (branch) Advanced feature engineering
-    ├── DataQualityValidation.ipynb     # (branch) Data quality & outlier treatment
-    └── SemiSupervisedModel.ipynb       # (branch) Semi-supervised ML model
+        ├── DataExtraction.ipynb
+        └── FeatureEngineering.ipynb
 ```
 
 ---
 
-## 3. Branch Strategy
+## 3. Notebook and Model Status
 
-| Branch | Purpose | Status |
-|--------|---------|--------|
-| `main` | Stable project code — extraction, EDA, feature engineering, app mockup | **Active** |
-| `Maria` | Contributor branch | Exists on remote |
-| `feature/advanced-feature-engineering` | Adds advanced feature engineering notebook | **Pushed to GitHub** |
-| `feature/data-quality-validation` | Adds data quality validation & outlier treatment notebook | **Pushed to GitHub** |
-| `feature/semi-supervised-model` | Semi-supervised ML model for revenue tier prediction | **Pushed to GitHub** |
+### 3.1 Data and Feature Pipeline
+- `notebooks/DataExtraction.ipynb`: extraction and enrichment pipeline.
+- `notebooks/FeatureEngineering.ipynb`: cleaning and pre-release feature construction.
+- `EDA/EDA.ipynb`: exploratory analysis.
 
----
+### 3.2 Popularity Modeling
+- `models/PopularityModelComparison.ipynb` is present and used for supervised popularity benchmarking.
+- Packaged popularity model exists in `models/popularity_best_model.pkl`.
 
-## 4. Work Completed (Pre-Existing on `main`)
+### 3.3 Revenue Tier Semi-Supervised Modeling
+- `models/SemiSupervisedModels.ipynb`: baseline SSL workflow.
+- `models/SemiSupervisedModels_V2.ipynb`: updated version with fine-tuning and expanded evaluation.
 
-### 4.1 Data Extraction (`notebooks/DataExtraction.ipynb`)
-- Authenticated API calls to TMDB (`/discover/movie`, `/movie/{id}`, `/person/{id}`)
-- Extracted movies from **2010–2025**, sorted by popularity (~30 pages per year)
-- Enriched each movie with **credits** (top 5 actors + director) and **keywords**
-- Person-level caching to respect API rate limits
-- **Output:** `data/movies_2010_2025.csv`
-
-### 4.2 Feature Engineering (`notebooks/FeatureEngineering.ipynb`)
-- Removed duplicates by `movie_id`
-- Parsed dates → `release_year`, `release_month`, `release_quarter`, `release_dayofweek`, `is_weekend_release`
-- Normalized numeric columns; replaced zero budget/revenue with NaN
-- Created missing-value indicator flags (`runtime_missing`, `budget_missing`, etc.)
-- Text features from overview (`overview_len`, `overview_word_count`)
-- Parsed and one-hot encoded top 15 genres and top 25 keywords
-- Cast aggregate features (`actor_pop_mean/max/min/std`, `cast_size`)
-- Gender representation counts (`gender_female_count`, `has_female_director`)
-- Financial features (`log_budget`, `log_revenue`, `roi`, `success_revenue`, `success_roi_1_5`)
-- Median imputation for missing numeric values (excluding target columns)
-- **Output:** `data/data_cleaned_engineered.csv`
-
-### 4.3 Exploratory Data Analysis (`EDA/EDA.ipynb`)
-- Dataset shape and info inspection
-- Missing value analysis (null counts + zero-value counts for actor popularity)
-- Helper functions for parsing list columns and counting empties
-- Numeric summary statistics
-- Visualizations: distributions, genre breakdowns, correlation analysis, scatter plots
-- Popularity and revenue trend analysis
-
-### 4.4 Streamlit App Mockup (`app/app_mockup.py`)
-- Mock predictor function simulating ML output
-- User inputs: genre, actor tier, runtime, release month
-- Outputs: hit probability, expected popularity score, explanation
-- Styled UI with gradient cards and responsive layout
+V2 status highlights:
+- Compares base + tuned variants for supervised and SSL models.
+- Comparison table includes: `accuracy`, `macro_f1`, `macro_precision`, `macro_recall`.
+- Includes percentage confusion matrix artifact: `data/best_ssl_confusion_matrix_pct.png`.
 
 ---
 
-## 5. New Work Completed (Feature Branches)
+## 4. Latest SSL Comparison Results (from `data/ssl_model_comparison.csv`)
 
-### 5.1 Advanced Feature Engineering (`feature/advanced-feature-engineering`)
+| Rank | Model | Accuracy | Macro F1 | Macro Precision | Macro Recall |
+|------|-------|----------|----------|------------------|--------------|
+| 1 | SelfTraining (SSL, tuned) | 0.6180 | 0.6247 | 0.6399 | 0.6180 |
+| 2 | RandomForest (supervised, base) | 0.6161 | 0.6172 | 0.6228 | 0.6161 |
+| 3 | RandomForest (supervised, tuned) | 0.6065 | 0.6064 | 0.6143 | 0.6065 |
+| 4 | GradientBoosting (supervised, base) | 0.6027 | 0.6032 | 0.6061 | 0.6028 |
+| 5 | GradientBoosting (supervised, tuned) | 0.6027 | 0.6024 | 0.6035 | 0.6027 |
+| 6 | SelfTraining (SSL, base) | 0.5931 | 0.5909 | 0.5976 | 0.5931 |
+| 7 | LabelSpreading (SSL, tuned) | 0.5470 | 0.5420 | 0.5415 | 0.5472 |
+| 8 | LabelPropagation (SSL, tuned) | 0.5278 | 0.5277 | 0.5283 | 0.5280 |
+| 9 | LabelPropagation (SSL, base) | 0.5029 | 0.5011 | 0.5000 | 0.5031 |
+| 10 | LabelSpreading (SSL, base) | 0.4952 | 0.4943 | 0.4937 | 0.4954 |
 
-**Notebook:** `notebooks/AdvancedFeatureEngineering.ipynb`
-
-| # | Feature Category | Features Created | Description |
-|---|-----------------|-----------------|-------------|
-| 1 | Seasonality flags | `is_summer_release`, `is_holiday_release`, `is_valentines_release`, `is_halloween_release`, `is_dump_month` | Binary flags for key release windows |
-| 2 | Competition density | `monthly_competition`, `weekly_competition` | Count of movies released in the same month/week |
-| 3 | Director track record | `director_hist_revenue`, `director_hist_vote_average`, `director_hist_popularity`, `director_film_count`, `is_debut_director` | Rolling historical averages (leak-free, excludes current movie) |
-| 4 | Franchise detection | `is_franchise_keyword`, `is_sequel_title`, `is_franchise` | Sequel/franchise flags via keyword matching + title regex |
-| 5 | Budget tiers | `budget_tier`, `budget_tier_*` (one-hot) | Categorized into micro / low / medium / high / blockbuster |
-| 6 | Cast diversity | `cast_gender_diversity`, `female_ratio` | Shannon entropy index + female representation ratio |
-| 7 | Text features | `avg_word_length`, `long_word_ratio`, `has_question`, `exclamation_count`, `sentence_count` | NLP-lite signals from movie overview |
-| 8 | Genre interactions | `genre_action_x_comedy`, `genre_action_x_scifi`, `genre_horror_x_comedy`, `genre_drama_x_romance`, `genre_action_x_adventure`, `genre_animation_x_family`, `genre_crime_x_thriller` | Interaction features for common genre pairings |
-| 9 | Engagement ratio | `popularity_per_vote`, `log_vote_count`, `is_high_hype_low_engagement` | Hype vs. actual viewer engagement signals |
-
-**Output:** `data/data_advanced_features.csv`
-
-### 5.2 Data Quality Validation (`feature/data-quality-validation`)
-
-**Notebook:** `notebooks/DataQualityValidation.ipynb`
-
-| # | Check Category | What It Does |
-|---|---------------|--------------|
-| 1 | Schema validation | Verifies column data types match expectations; auto-converts dates |
-| 2 | Missing data analysis | Visualizes missing percentages (bar chart) + missing patterns (heatmap) |
-| 3 | Missing data correlation | Correlation matrix of missingness to detect MAR/MNAR patterns |
-| 4 | Outlier detection (IQR) | Identifies outliers using 1.5× IQR bounds for key numeric columns |
-| 5 | Outlier detection (z-score) | Flags values beyond 3 standard deviations |
-| 6 | Outlier treatment | Conservative winsorization (capping at 3× IQR) with `_capped` columns |
-| 7 | Duplicate detection | Exact duplicates (by `movie_id`) + near-duplicates (same title + year) |
-| 8 | Domain rules | Validates: runtime 1–600 min, votes 0–10, non-negative budget/revenue, year range, ROI sanity |
-| 9 | Correlation analysis | Heatmap of key features + identifies pairs with |r| > 0.85 |
-| 10 | Feature drop suggestions | Recommends which correlated feature to drop based on target correlation |
-
-**Output:** `data/data_quality_validated.csv`
-
-### 5.3 Semi-Supervised Model (`feature/semi-supervised-model`)
-
-**Notebook:** `notebooks/SemiSupervisedModel.ipynb`
-
-**Motivation:** Revenue is 72% missing — a perfect scenario for semi-supervised learning, which leverages both labeled and unlabeled data.
-
-**Target:** Revenue Tier classification (Low / Medium / High / Blockbuster) based on quartiles of known revenue.
-
-| # | Model | Type | Accuracy | Weighted F1 |
-|---|-------|------|----------|-------------|
-| 1 | Gradient Boosting | Supervised (baseline) | 61.4% | 61.6% |
-| 2 | **Self-Training Classifier** | **Semi-Supervised** | **64.8%** | **64.7%** |
-| 3 | Label Propagation | Semi-Supervised | 51.7% | 51.9% |
-| 4 | Label Spreading | Semi-Supervised | 52.3% | 52.7% |
-
-**Key Results:**
-- Self-Training outperformed the supervised baseline by **+3.4% accuracy**, demonstrating the value of leveraging unlabeled data
-- The model iteratively pseudo-labeled 6,628 unlabeled samples across 12 iterations
-- Top predictive features: `vote_count`, `log_budget`, `budget`, `vote_average`, `popularity`
-- Generated revenue tier predictions for **6,686 previously unlabeled movies** with 99.2% average confidence
-- Includes confusion matrices, feature importance charts, and confidence distribution visualizations
-
-**Output:** `data/data_semi_supervised_predictions.csv`
+Current best model by macro F1: **SelfTraining (SSL, tuned)**.
 
 ---
 
-## 6. Commit History Summary
+## 5. Export and App Integration Status
 
-| Commit | Branch | Description |
-|--------|--------|-------------|
-| `17b00e7` | main | Initial commit |
-| `06f35b4` | main | Create folders and add data |
-| `8713837` | main | Project structure |
-| `9b0a427` | main | Data extraction notebook |
-| `850a690` | main | app.py file created |
-| `595d2db` | Maria | App mockup |
-| `0da1084` | main | Data upload |
-| `6dc8c84` | main | Data upload movies 2020–2025 |
-| `9c72a18` | main | Data upload movies 2010–2025 |
-| `bd7c553` | main | Data extraction notebook |
-| `10a82db` | main | EDA |
-| `d6189be` | main | Feature engineering draft |
-| `736b2dd` | feature/advanced-feature-engineering | Advanced feature engineering notebook |
-| `cdceb98` | feature/data-quality-validation | Data quality validation notebook |
-| `b96905f` | feature/semi-supervised-model | Semi-supervised model: Self-Training, Label Propagation, Label Spreading |
+- `models/export_best_models.py` exists and packages models/metadata.
+- Exported artifacts available:
+    - `models/ssl_best_model.pkl`
+    - `models/ssl_scaler.pkl`
+    - `models/model_metadata.pkl`
+    - `models/popularity_best_model.pkl`
+- App files available:
+    - `app/app_mockup.py`
+    - `app/app_mockup2.py`
 
 ---
 
-## 7. Next Steps
+## 6. Current Completion Snapshot
 
-- [ ] Merge feature branches into `main` via Pull Requests
-- [x] Build semi-supervised classification model (revenue tier prediction)
-- [ ] Build regression model (predict continuous popularity score)
-- [ ] Evaluate additional models (ROC-AUC, MAE, RMSE, R²)
-- [ ] Connect trained models to the Streamlit app (replace mock predictor)
-- [ ] Final documentation and presentation
+- ✅ Data extraction notebook available
+- ✅ Feature engineering notebook available
+- ✅ EDA notebook available
+- ✅ Popularity modeling notebook available
+- ✅ Semi-supervised modeling notebook available
+- ✅ V2 SSL notebook with tuning + full metrics available
+- ✅ Model export script and packaged model files available
+- ✅ Streamlit mockup app files available
 
 ---
 
-## 8. Technologies Used
+## 7. Recommended Next Actions
 
-| Category | Tools |
-|----------|-------|
-| Language | Python 3.x |
-| Data | Pandas, NumPy |
-| ML | Scikit-learn (GradientBoosting, SelfTraining, LabelPropagation, LabelSpreading) |
-| Visualization | Matplotlib, Seaborn |
-| API | TMDB API (requests) |
-| App | Streamlit |
-| Version Control | Git, GitHub |
-| Environment | Jupyter Notebooks, VS Code |
+1. Standardize one canonical SSL notebook (`SemiSupervisedModels_V2.ipynb`) for final reporting.
+2. Re-run full notebook pipeline once before final delivery to refresh all artifacts consistently.
+3. Confirm app consumes the latest exported metadata and feature schema.
+4. Freeze dependency versions for reproducibility (`requirements.txt` / environment spec).

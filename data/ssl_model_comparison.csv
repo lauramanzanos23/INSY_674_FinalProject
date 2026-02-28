@@ -1,6 +1,11 @@
-model_name,accuracy,macro_f1,notes
-SelfTraining (SSL),0.5547,0.5486,Pseudo-labeled: 3966 samples
-RandomForest (supervised),0.524,0.5197,Supervised baseline
-GradientBoosting (supervised),0.5067,0.5054,Supervised baseline
-LabelSpreading (SSL),0.428,0.4271,"kernel=knn, n_neighbors=10, No PCA"
-LabelPropagation (SSL),0.4261,0.4237,"kernel=knn, n_neighbors=10, No PCA"
+model_name,accuracy,macro_f1,macro_precision,macro_recall,notes
+"SelfTraining (SSL, tuned)",0.618,0.6247,0.6399,0.618,Pseudo-labeled: 5968 samples; threshold=0.7
+"RandomForest (supervised, base)",0.6161,0.6172,0.6228,0.6161,Default hyperparameters (no fine tuning)
+"RandomForest (supervised, tuned)",0.6065,0.6064,0.6143,0.6065,RandomizedSearchCV on labeled train (macro F1)
+"GradientBoosting (supervised, base)",0.6027,0.6032,0.6061,0.6028,Default hyperparameters (no fine tuning)
+"GradientBoosting (supervised, tuned)",0.6027,0.6024,0.6035,0.6027,RandomizedSearchCV on labeled train (macro F1)
+"SelfTraining (SSL, base)",0.5931,0.5909,0.5976,0.5931,Pseudo-labeled: 5054 samples; threshold=0.9
+"LabelSpreading (SSL, tuned)",0.547,0.542,0.5415,0.5472,"kernel=knn, n_neighbors=30, No PCA"
+"LabelPropagation (SSL, tuned)",0.5278,0.5277,0.5283,0.528,"kernel=knn, n_neighbors=20, No PCA"
+"LabelPropagation (SSL, base)",0.5029,0.5011,0.5,0.5031,"kernel=knn, n_neighbors=10, No PCA"
+"LabelSpreading (SSL, base)",0.4952,0.4943,0.4937,0.4954,"kernel=knn, n_neighbors=10, No PCA"
