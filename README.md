@@ -1,296 +1,189 @@
-# TMDB Movie Success Prediction Project
+# TMDB Movie Success Prediction
 
-## Executive Summary
-This project delivers an end-to-end machine learning workflow to estimate movie success before release using TMDB-derived metadata.
+End-to-end machine learning project to estimate movie outcomes before release using TMDB-derived metadata.
 
-It supports two prediction tasks:
-1. Popularity prediction (regression).
-2. Revenue tier prediction (semi-supervised classification: Low/Medium/High/Blockbuster).
+## What This Project Does
 
-The final pipeline includes:
-1. Data extraction and enrichment from TMDB.
-2. Pre-release-safe feature engineering.
-3. Model comparison, cross-validation, and fine-tuning.
-4. Model export for app serving.
-5. Streamlit app (`app/app_final.py`) for scenario testing.
+Two prediction tasks:
+1. Popularity prediction (regression)
+2. Revenue tier prediction (semi-supervised classification: Low / Medium / High / Blockbuster)
 
-## Business Questions
-1. How popular is a movie likely to be before release?
-2. Which revenue tier is it likely to reach?
-3. Which pre-release factors (cast, director, timing, genre, budget proxy) drive outcomes?
-4. How do casting and release decisions change predicted results in what-if scenarios?
+It includes:
+1. Data extraction and feature engineering
+2. Model comparison, validation, and fine-tuning
+3. Explainability (feature importance + SHAP)
+4. Causal inference analysis
+5. Streamlit app for what-if casting scenarios
+
+---
 
 ## Repository Structure
+
 ```text
-INSY 674 FinalProject/
-├── README.md
-├── PROJECT_STATUS_REPORT.md
-├── EDA/
-│   └── EDA.ipynb
-├── notebooks/
-│   ├── DataExtraction.ipynb
-│   └── FeatureEngineering.ipynb
-├── data/
-│   └── movies_2010_2025.csv
-├── models/
-│   ├── PopularityModelComparison.ipynb
-│   ├── SemiSupervisedModels.ipynb
-│   ├── SemiSupervisedModels_V2.ipynb
-│   └── export_best_models.py
-├── app/
-│   └── app_final.py
-└── src/
+app/
+  app_final.py
+data/
+  movies_2010_2025.csv
+  data_supervised_popularity.csv
+  data_ssl_revenue.csv
+models/
+  PopularityModelComparison.ipynb
+  SemiSupervisedModels_V2.ipynb
+  export_best_models.py
+  popularity_best_model.pkl
+  ssl_best_model.pkl
+  ssl_scaler.pkl
+  model_metadata.pkl
+docs/figures/
+  PopularityModelComparison_files/*.png
+  SemiSupervisedModels_V2_files/*.png
 ```
 
-## End-to-End Pipeline
-1. **Data extraction** (`notebooks/DataExtraction.ipynb`)
-   - Collects 2010-2025 movie records from TMDB-style endpoints.
-   - Enriches with cast, director, keywords, and metadata.
-   - Produces base dataset (`movies_2010_2025.csv`).
+---
 
-2. **Feature engineering** (`notebooks/FeatureEngineering.ipynb`)
-   - Creates a target-agnostic master table from pre-release features.
-   - Enforces leakage controls (post-release variables excluded from model feature sets).
-   - Handles zero-as-missing corrections for budget/revenue.
-   - Builds derived supervised and SSL datasets.
+## Data and Features
 
-3. **Popularity modeling** (`models/PopularityModelComparison.ipynb`)
-   - Compares baseline, linear, tree ensemble, and boosting regressors.
-   - Uses holdout metrics plus cross-validation for robustness.
-   - Includes explainability (feature importance + SHAP) and tuning blocks.
+Primary source:
+1. TMDB API (movie metadata, cast/director, keywords, release info)
 
-4. **Revenue-tier SSL modeling** (`models/SemiSupervisedModels_V2.ipynb`)
-   - Builds labeled + unlabeled setup for semi-supervised learning.
-   - Compares supervised and SSL classifiers.
-   - Selects best model by Macro F1 then Accuracy.
+Core feature groups:
+1. Talent: director and top-cast popularity
+2. Content: genres, language
+3. Timing: release month/year, seasonal flags
+4. Production: runtime, budget indicators (`has_budget`, `log_budget`)
+5. Text proxies: keyword count, overview length/presence
 
-5. **Model packaging** (`models/export_best_models.py`)
-   - Trains/selects final popularity model using notebook-consistent policy.
-   - Loads best SSL artifacts and creates metadata used by app inference.
+Leakage control:
+1. Post-release signals are excluded from training features used in app inference.
 
-6. **Interactive app** (`app/app_final.py`)
-   - Loads exported models and metadata.
-   - Lets users lock director/cast and tune scenario inputs.
-   - Returns popularity estimate, revenue tier, confidence, and composite fit score.
+---
 
-## Datasets and Artifacts
-### Primary input
-1. `data/movies_2010_2025.csv`: original extracted movie dataset.
+## Modeling
 
-### Generated datasets (pipeline outputs)
-1. `data/data_features_master.csv`
-2. `data/data_supervised_popularity.csv`
-3. `data/data_supervised_revenue.csv`
-4. `data/data_ssl_revenue.csv`
+### Popularity Regression
 
-### Model artifacts
+Notebook:
+1. [`models/PopularityModelComparison.ipynb`](models/PopularityModelComparison.ipynb)
+
+Highlights:
+1. Baselines + multiple regressors
+2. Holdout evaluation and cross-validation
+3. Raw target vs `log1p(popularity)` ablation
+4. Final-model validation + targeted fine-tuning
+5. SHAP explainability for the selected final model
+
+Current exported app model:
+1. Gradient Boosting with `log1p` target transform (back-transformed with `expm1` at inference)
+
+### Revenue Tier Semi-Supervised Classification
+
+Notebook:
+1. [`models/SemiSupervisedModels_V2.ipynb`](models/SemiSupervisedModels_V2.ipynb)
+
+Highlights:
+1. Semi-supervised setup with labeled + unlabeled examples
+2. Feature policy aligned to pre-release setting
+3. Selection by classification performance
+4. Confusion matrix and class-level diagnostics
+
+---
+
+## Notebook Figures
+
+### Popularity distribution
+![Popularity distribution](docs/figures/PopularityModelComparison_files/PopularityModelComparison_7_0.png)
+
+### Model comparison snapshot
+![Model comparison](docs/figures/PopularityModelComparison_files/PopularityModelComparison_15_2.png)
+
+### Best-model diagnostics
+![Residual diagnostics](docs/figures/PopularityModelComparison_files/PopularityModelComparison_18_0.png)
+
+### Feature importance
+![Feature importance](docs/figures/PopularityModelComparison_files/PopularityModelComparison_20_1.png)
+
+### SHAP summary (best/final model views)
+![SHAP summary](docs/figures/PopularityModelComparison_files/PopularityModelComparison_40_1.png)
+
+### Causal inference chart
+![Causal inference](docs/figures/PopularityModelComparison_files/PopularityModelComparison_26_5.png)
+
+### Semi-supervised confusion matrix
+![SSL confusion matrix](docs/figures/SemiSupervisedModels_V2_files/SemiSupervisedModels_V2_41_1.png)
+
+---
+
+## Causal Inference
+
+In the popularity notebook, budget-treatment analysis includes:
+1. IPW estimate
+2. Doubly robust estimate
+3. Overlap/robustness checks (including placebo workflow)
+
+Interpretation:
+1. Treat as observational causal evidence, not randomized proof.
+2. Use overlap and confidence intervals to judge reliability.
+
+---
+
+## Streamlit App
+
+App file:
+1. [`app/app_final.py`](app/app_final.py)
+
+What the app shows:
+1. Predicted popularity + percentile context
+2. Revenue tier outlook + confidence
+3. Actor/director popularity chart
+4. TMDB “known-for” movies (with dataset fallback)
+
+Run locally:
+```bash
+streamlit run app/app_final.py
+```
+
+---
+
+## Model Export
+
+Script:
+1. [`models/export_best_models.py`](models/export_best_models.py)
+
+Run:
+```bash
+python models/export_best_models.py
+```
+
+Generated artifacts:
 1. `models/popularity_best_model.pkl`
 2. `models/ssl_best_model.pkl`
 3. `models/ssl_scaler.pkl`
 4. `models/model_metadata.pkl`
 
-## Exploratory Data Analysis
-### 1) Data Overview
-1. Total movies: 9290
-2. Labeled rows (revenue known):2604
-3. Total feature: 52
+---
 
-### 2) Raw features
-Groups | Categorical variables​ | Numerous variable​s 
---- | --- | --- 
-Feature name | Title, ​Release date, Original language,​ Status, overview,​Genres, Keywords,​ Director name,​ Director department,​ Actor(1-5) name,​ Actor(1-5) character​ | Runtime, ​Popularity, ​Vote average, ​Vote count, Budget, ​Revenue, ​Director id, ​Director gender, Director Popularity,​ Actor(1-5) id, Actor(1-5) gender, Cast pop mean, Cast pop max​
+## Deployment (Streamlit Cloud)
 
-### 3) Missing Value
-Features name | Number of missing values
---- | ---
-runtime | 457
-Vote average | 1642
-Vote Count | 1640
-budget | 6527
-revenue | 6686
-cast_pop_mean | 222
-cast_pop_max | 222
-director_gender | 2285
-Missing_actor1 | 225
-Missing_actor2 | 384
-Missing_actor3 | 681
-Missing_actor4 | 1036
-Missing_actor5 | 1479
-genres | 489
-keywords | 3238
+Required files:
+1. [`requirements.txt`](requirements.txt)
+2. [`runtime.txt`](runtime.txt)
 
-### 4) The distribution of log target variable​
-#### Revenue
-<img width="515" height="402" alt="Image" src="https://github.com/user-attachments/assets/df0371d8-7b35-47ff-83a6-e1487734efff" />
+If deployment fails on model load:
+1. Check logs for missing module during PKL unpickling
+2. Ensure dependency versions match training/export environment
 
-#### Popularity
-<img width="544" height="406" alt="Image" src="https://github.com/user-attachments/assets/8a3f3ece-52d7-4197-9ae8-f454e87d9f26" />
-
-### 5) Correlation map
-<img width="1004" height="703" alt="Image" src="https://github.com/user-attachments/assets/90f7900e-9ca6-4d44-a882-16c38b4270d5" />
-
-### 6) Genres and Talent ranking
-#### Genres
-<img width="592" height="401" alt="Image" src="https://github.com/user-attachments/assets/73a2e91b-f1eb-45cf-ac4c-e7b8cad0a9eb" />
-
-#### Ranking Director popularity​
-Ranking | Director Name | Director Popularity
---- | --- | ---
-1 | Jackie Chan | 20.8778
-2 | Tom Hanks | 15.8630
-3 | Ben Affleck | 12.3544
-4 | Angelina Jolie | 10.9173
-5 | Sylvester Stallone | 10.5039
-6 | Andrew McCarthy | 9.1435
-7 | Christopher Nolan | 8.2813
-8 | Denzel Washington | 8.2672
-9 | Aditya Dhar | 8.0828
-10 | Pascal Cervo | 8.0077
-
-
-#### Ranking actor popularity​
-Ranking | Actor Name | Actor Popularity
---- | --- | ---
-1 | Kayden Kross | 224.1500
-2 | Evelyn Claire | 145.2190
-3 | Chanel Preston | 88.1540
-4 | Akiho Yoshizawa | 85.4980
-5 | Rosa Caracciolo | 75.3990
-6 | Mia Malkova | 42.7140
-7 | Sydney Sweeney | 42.2737
-8 | Rocco Siffredi | 38.1250
-9 |  Alexis Texas | 37.0830
-10 | Blair Williams | 31.6300
-
-#### Ranking actor appearance ​
-Ranking | Actor Name | Actor Appearance
---- | --- | ---
-1 | Mark Wahlberg | 28
-2 | Eric Roberts | 27
-3 | Samuel L. Jackson | 26
-4 | Liam Neeson | 25
-5 | Scarlett Johansson | 25
-6 | Woody Harrelson | 25
-7 | Ryan Reynolds | 24
-8 | Josh Brolin | 23
-9 | Tom Hanks | 23
-10 | Jake Gyllenhaal | 22
-
-## Modeling Summary
-## 1) Popularity Regression
-Notebook: `models/PopularityModelComparison.ipynb`
-
-### Models compared
-1. Dummy Mean
-2. Linear Regression
-3. RidgeCV
-4. Random Forest
-5. Extra Trees
-6. Gradient Boosting
-7. Hist Gradient Boosting
-8. XGBoost
-9. LightGBM
-
-### Evaluation setup
-1. 80/20 holdout split.
-2. Metrics: RMSE, MAE, R2 (+ MedAE, MAPE, ExplainedVariance, MaxError, NRMSE).
-3. K-Fold CV (3-fold) for `CV_RMSE`.
-4. Repeated CV (5x2) for top-model stability.
-5. Target ablation: raw popularity vs `log1p(popularity)`.
-6. XGBoost RandomizedSearchCV fine-tuning block.
-
-### Key reported results (current notebook outputs)
-1. Best raw-target holdout model: **XGBoost**
-   - RMSE `4.185`, MAE `1.626`, R2 `0.314`.
-2. Best log-target setting: **Gradient Boosting + log1p(popularity)**
-   - RMSE `3.507`, MAE `1.420`, R2 `0.519`.
-3. Fine-tuned XGBoost improved over baseline XGBoost on holdout:
-   - RMSE `4.149` vs `4.185`, MAE `1.570` vs `1.626`, R2 `0.326` vs `0.314`.
-
-### Explainability
-1. Global importances and SHAP summaries are included.
-2. Top SHAP features (XGBoost view) include `release_year`, `log_budget`, `keyword_count`, and talent/timing variables.
-
-## 2) Revenue Tier Semi-Supervised Classification
-Notebook: `models/SemiSupervisedModels_V2.ipynb`
-
-### Target
-`y_ssl` classes:
-1. `0` = Low
-2. `1` = Medium
-3. `2` = High
-4. `3` = Blockbuster
-5. `-1` = unlabeled rows (used in SSL training workflow)
-
-### Model comparison
-1. Supervised baselines (e.g., GradientBoosting, RandomForest).
-2. SSL approaches (e.g., SelfTraining; graph-based methods depending on notebook section/version).
-3. Selection based on Macro F1 then Accuracy.
-
-### Reported comparison file
-`data/ssl_model_comparison.csv` stores final metric table for SSL run.
-
-## App Overview (`app/app_final.py`)
-The final app is a casting sandbox for pre-release scenario analysis.
-
-### What users can do
-1. Select and lock a director.
-2. Select cast (up to 5 actors).
-3. Adjust genre, language, runtime, release year/month, keyword count, budget, and overview length.
-4. View model outputs:
-   - Predicted popularity (with percentile context vs training data).
-   - Predicted revenue tier + confidence.
-   - Composite casting fit score.
-5. Compare scenario score versus director baseline.
-6. Inspect top known-for movies from TMDB (with local fallback).
-7. View global feature-importance chart for popularity model.
-
-### Inference notes
-1. Popularity model may be trained on `log1p` target; app applies `expm1` back-transform when metadata indicates it.
-2. SSL path uses exported scaler and feature list from metadata.
-3. Composite score in app is explicitly weighted:
-   - 65% popularity score
-   - 25% revenue tier score
-   - 10% confidence
-
-## How to Run
-## 1) Export models
-```bash
-python models/export_best_models.py
-```
-
-## 2) Launch app
-```bash
-streamlit run app/app_final.py
-```
-
-## 3) Reproduce notebooks
-1. Run `notebooks/DataExtraction.ipynb`
-2. Run `notebooks/FeatureEngineering.ipynb`
-3. Run `models/PopularityModelComparison.ipynb`
-4. Run `models/SemiSupervisedModels_V2.ipynb`
-
-## Environment
-Core libraries used:
-1. Python 3.x
-2. pandas, numpy
-3. scikit-learn
-4. xgboost, lightgbm 
-5. shap (optional explainability)
-6. streamlit, altair
-7. joblib, pickle
-
-Optional env var:
-1. `TMDB_API_KEY` for live TMDB enrichment in app profile lookups.
+---
 
 ## Limitations
-1. Model quality depends on TMDB coverage and data quality.
-2. Targets are heavy-tailed and noisy; performance varies by split strategy.
-3. Some app lookups rely on TMDB availability/network.
-4. Causal-style analyses in notebooks are observational and not causal proof.
 
-## Next Improvements
-1. Add strict temporal CV for all final model selection decisions.
-2. Add uncertainty intervals/calibration in app output.
-3. Version artifact schema to prevent model-metadata mismatch.
-4. Add automated tests for feature-row construction parity between training and app inference.
+1. TMDB metadata coverage varies by movie/person.
+2. Popularity and revenue proxies are noisy and non-stationary.
+3. Semi-supervised labels can propagate bias.
+4. Causal estimates rely on assumptions and overlap quality.
+
+## Next Steps
+
+1. Add temporal validation for out-of-time robustness.
+2. Add model registry/version tracking for artifacts.
+3. Add calibration diagnostics in UI.
+4. Add automated CI checks for artifact compatibility.
