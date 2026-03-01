@@ -376,10 +376,7 @@ Interpretation & Deployment
 - Production deployment requires monitoring and drift control.
 
 **Conclusion**
-- Pre-release metadata contains meaningful predictive signal for both popularity and revenue tier.
-- Supervised models significantly outperform baseline error for popularity prediction.
-- Semi-supervised Self Training achieved the best F1 for revenue tiers, improving over the best supervised model.
-- Leveraging unlabeled data added measurable value when pseudo-labeling was carefully controlled.
+This project demonstrates that **pre-release metadata can meaningfully predict movie outcomes**, even under incomplete revenue labels. The supervised popularity model materially improves over baseline error, and the semi-supervised Self‑Training model delivers the strongest macro‑F1 for revenue tiers. These results provide **actionable, interpretable signals** that can support greenlighting, casting, and release‑strategy decisions, while acknowledging the need for continued monitoring, temporal robustness, and drift control in production.
 
 Business Insight
 - Release timing, budget-related proxies, and talent popularity are consistently strong predictors.
