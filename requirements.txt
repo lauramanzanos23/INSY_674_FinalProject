@@ -1,0 +1,7 @@
+streamlit>=1.38,<2
+numpy>=1.26,<3
+pandas>=2.2,<3
+scipy>=1.11,<2
+scikit-learn>=1.4,<1.7
+altair>=5.0,<6
+xgboost>=2.0,<3
