@@ -317,16 +317,20 @@ Holdout metrics (original popularity scale):
 
 Revenue tier prediction (semi-supervised):
 - Best model: SelfTraining (SSL) with tuned Random Forest base estimator.
-- Primary metric: Macro F1 on held-out labeled test set.
+- Primary metric: Macro F1 on held-out labeled test set (selected by validation Macro F1).
 
 Comparison (held-out labeled test set):
-| Model | Accuracy | Macro F1 | Notes |
-|---|---:|---:|---|
-| SelfTraining (SSL, tuned) | 0.6238 | 0.6296 | Pseudo-labeled: 5974 samples; threshold=0.7 |
-| RandomForest (supervised, tuned) | 0.6046 | 0.6048 | Supervised baseline |
-| GradientBoosting (supervised, tuned) | 0.6027 | 0.6024 | Supervised baseline |
-| LabelSpreading (SSL, tuned) | 0.5470 | 0.5420 | Graph SSL |
-| LabelPropagation (SSL, tuned) | 0.5278 | 0.5277 | Graph SSL |
+| Model | Accuracy | Macro F1 | Macro Precision | Macro Recall | Notes |
+|---|---:|---:|---:|---:|---|
+| SelfTraining (SSL, tuned) | 0.6180 | 0.6247 | 0.6399 | 0.6180 | Pseudo-labeled: 5968 samples; threshold=0.7 |
+| RandomForest (supervised, base) | 0.6161 | 0.6172 | 0.6228 | 0.6161 | Default hyperparameters (no fine tuning) |
+| RandomForest (supervised, tuned) | 0.6065 | 0.6064 | 0.6143 | 0.6065 | RandomizedSearchCV on labeled train (macro F1) |
+| GradientBoosting (supervised, base) | 0.6027 | 0.6032 | 0.6061 | 0.6028 | Default hyperparameters (no fine tuning) |
+| GradientBoosting (supervised, tuned) | 0.6027 | 0.6024 | 0.6035 | 0.6027 | RandomizedSearchCV on labeled train (macro F1) |
+| SelfTraining (SSL, base) | 0.5931 | 0.5909 | 0.5976 | 0.5931 | Pseudo-labeled: 5054 samples; threshold=0.9 |
+| LabelSpreading (SSL, tuned) | 0.5470 | 0.5420 | 0.5415 | 0.5472 | kernel=knn, n_neighbors=30, No PCA |
+| LabelPropagation (SSL, tuned) | 0.5278 | 0.5277 | 0.5283 | 0.5280 | kernel=knn, n_neighbors=20, No PCA |
+| LabelPropagation (SSL, base) | 0.5029 | 0.5011 | 0.5000 | 0.5031 | kernel=knn, n_neighbors=10, No PCA |
 
 **Explainability of Results**
 Explainability included in popularity notebook:
@@ -350,7 +354,7 @@ Final model SHAP summary
 ![Final model SHAP](docs/figures/PopularityModelComparison_files/PopularityModelComparison_40_1.png)
 
 Best SSL confusion matrix
-![SSL confusion matrix](docs/figures/SemiSupervisedModels_Final_files/best_ssl_confusion_matrix.png)
+![SSL confusion matrix](data/best_ssl_confusion_matrix.png)
 
 **Threats to Validity**
 
@@ -379,6 +383,12 @@ Interpretation & Deployment
 Business Insight
 - Release timing, budget-related proxies, and talent popularity are consistently strong predictors.
 - Results provide interpretable signals for greenlighting, marketing, and release strategy decisions.
+
+Business Value Relevance
+- **Greenlighting:** rank projects by expected popularity and revenue tier to prioritize investment.
+- **Budget planning:** use sensitivity on budget-related proxies and timing to shape ROI-focused scenarios.
+- **Casting strategy:** quantify talent effects using cast/director popularity signals.
+- **Marketing and release timing:** identify seasons and release windows that correlate with stronger outcomes.
 
 Next Steps
 - Improve temporal robustness.
