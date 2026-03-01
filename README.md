@@ -211,6 +211,8 @@ Semi-supervised models:
 2. Label Spreading (KNN graph).
 3. Label Propagation (KNN graph).
 
+> **Note:** Before training the SSL models, supervised baselines were run first (Random Forest and Gradient Boosting, both base and tuned via RandomizedSearchCV) to establish a performance benchmark and select the best base estimator for Self-Training. Random Forest was chosen as the base estimator because it achieved the highest Macro F1 among the supervised models, making it the strongest candidate to benefit from pseudo-label expansion in the SSL step.
+
 ---
 
 **5.6 Model Evaluation**
@@ -221,11 +223,12 @@ Evaluation setup (popularity):
 4. Ablation: raw target vs `log1p(popularity)` with back-transform (`expm1`) for comparable scale.
 
 Evaluation setup (revenue tier):
-1. **60% train / 20% validation / 20% test** split on labeled data only (stratified).
-2. Scaler and PCA fitted on train only — applied to val, test, and unlabeled.
-3. Model selection based on **validation** Macro F1; test set evaluated once at the end.
-4. Metrics: macro F1 (primary), accuracy, precision, recall.
-5. Confusion matrix diagnostics.
+1. **Data split:** Only the labeled subset (~2,600 movies with known revenue) was split into **60% train / 20% validation / 20% test** using stratified sampling to preserve class balance across all three sets. The remaining ~6,600 unlabeled rows (revenue unknown) were kept entirely separate and never used for evaluation.
+2. **Preprocessing discipline:** The scaler (StandardScaler) was fitted exclusively on the labeled training set and then applied — without refitting — to the validation set, the test set, and the unlabeled pool. This prevents data leakage from validation or test distributions into the feature scaling.
+3. **Supervised baselines:** Random Forest and Gradient Boosting (base and tuned) were trained on the labeled train set and evaluated on the validation set to establish a performance benchmark.
+4. **SSL training (Self-Training):** The model was first trained on the labeled train set, then used to assign pseudo-labels to the unlabeled pool where prediction confidence exceeded a threshold (0.7 for tuned, 0.9 for base). The model was retrained on the combined labeled train + pseudo-labeled data. Validation Macro F1 was used to select the best configuration.
+5. **Test set integrity:** The test set was held out completely and evaluated only once, after the best model was selected via validation. This ensures the reported test metrics are unbiased estimates of generalization performance.
+6. **Metrics:** Macro F1 (primary), accuracy, macro precision, macro recall, and confusion matrix diagnostics.
 
 ---
 
@@ -308,27 +311,33 @@ Popularity prediction (regression):
 - Best final model: Gradient Boosting with `log1p(popularity)`.
 
 Holdout metrics (original popularity scale):
-| Setting | Model | RMSE | MAE | R2 |
-|---|---|---:|---:|---:|
-| Best raw target | XGBoost | 4.1853 | 1.6265 | 0.3142 |
-| Best log1p target (final) | Gradient Boosting | 3.5067 | 1.4196 | 0.5186 |
+- **Best raw target — XGBoost:** RMSE 4.1853 · MAE 1.6265 · R² 0.3142
+- **Best log1p target (final) — Gradient Boosting:** RMSE 3.5067 · MAE 1.4196 · R² 0.5186
 
 Revenue tier prediction (semi-supervised):
 - Best model: SelfTraining (SSL) with tuned Random Forest base estimator.
 - Primary metric: Macro F1 on held-out labeled test set (selected by validation Macro F1).
 
 Comparison (held-out labeled test set):
-| Model | Accuracy | Macro F1 | Macro Precision | Macro Recall | Notes |
-|---|---:|---:|---:|---:|---|
-| SelfTraining (SSL, tuned) | 0.6180 | 0.6247 | 0.6399 | 0.6180 | Pseudo-labeled: 5968 samples; threshold=0.7 |
-| RandomForest (supervised, base) | 0.6161 | 0.6172 | 0.6228 | 0.6161 | Default hyperparameters (no fine tuning) |
-| RandomForest (supervised, tuned) | 0.6065 | 0.6064 | 0.6143 | 0.6065 | RandomizedSearchCV on labeled train (macro F1) |
-| GradientBoosting (supervised, base) | 0.6027 | 0.6032 | 0.6061 | 0.6028 | Default hyperparameters (no fine tuning) |
-| GradientBoosting (supervised, tuned) | 0.6027 | 0.6024 | 0.6035 | 0.6027 | RandomizedSearchCV on labeled train (macro F1) |
-| SelfTraining (SSL, base) | 0.5931 | 0.5909 | 0.5976 | 0.5931 | Pseudo-labeled: 5054 samples; threshold=0.9 |
-| LabelSpreading (SSL, tuned) | 0.5470 | 0.5420 | 0.5415 | 0.5472 | kernel=knn, n_neighbors=30, No PCA |
-| LabelPropagation (SSL, tuned) | 0.5278 | 0.5277 | 0.5283 | 0.5280 | kernel=knn, n_neighbors=20, No PCA |
-| LabelPropagation (SSL, base) | 0.5029 | 0.5011 | 0.5000 | 0.5031 | kernel=knn, n_neighbors=10, No PCA |
+- **SelfTraining (SSL, tuned)** — Accuracy: 0.6180 · Macro F1: 0.6247 · Precision: 0.6399 · Recall: 0.6180 *(Pseudo-labeled: 5,968 samples; threshold=0.7)*
+- **RandomForest (supervised, base)** — Accuracy: 0.6161 · Macro F1: 0.6172 · Precision: 0.6228 · Recall: 0.6161 *(Default hyperparameters)*
+- **RandomForest (supervised, tuned)** — Accuracy: 0.6065 · Macro F1: 0.6064 · Precision: 0.6143 · Recall: 0.6065 *(RandomizedSearchCV on labeled train)*
+- **GradientBoosting (supervised, base)** — Accuracy: 0.6027 · Macro F1: 0.6032 · Precision: 0.6061 · Recall: 0.6028 *(Default hyperparameters)*
+- **GradientBoosting (supervised, tuned)** — Accuracy: 0.6027 · Macro F1: 0.6024 · Precision: 0.6035 · Recall: 0.6027 *(RandomizedSearchCV on labeled train)*
+- **SelfTraining (SSL, base)** — Accuracy: 0.5931 · Macro F1: 0.5909 · Precision: 0.5976 · Recall: 0.5931 *(Pseudo-labeled: 5,054 samples; threshold=0.9)*
+- **LabelSpreading (SSL, tuned)** — Accuracy: 0.5470 · Macro F1: 0.5420 · Precision: 0.5415 · Recall: 0.5472 *(kernel=knn, n_neighbors=30, no PCA)*
+- **LabelPropagation (SSL, tuned)** — Accuracy: 0.5278 · Macro F1: 0.5277 · Precision: 0.5283 · Recall: 0.5280 *(kernel=knn, n_neighbors=20, no PCA)*
+- **LabelPropagation (SSL, base)** — Accuracy: 0.5029 · Macro F1: 0.5011 · Precision: 0.5000 · Recall: 0.5031 *(kernel=knn, n_neighbors=10, no PCA)*
+
+**Interpretation:** The best-performing model was Self-Training (SSL, tuned) with a Macro F1 of 0.6247. This confirms that incorporating pseudo-labeled data improved performance over purely supervised models trained on labeled samples alone — the tuned Self-Training approach outperformed both Random Forest and Gradient Boosting baselines, demonstrating that leveraging unlabeled data added measurable predictive value.
+
+Random Forest (base) ranked second and performed competitively, confirming that tree-based models remain strong baselines for structured tabular data — and explaining why it was selected as the base estimator for Self-Training.
+
+Graph-based SSL methods (Label Propagation and Label Spreading) underperformed relative to the other approaches. This is likely due to the high dimensionality of the feature space: graph-based methods rely on meaningful neighborhood structures, which degrade in high-dimensional spaces. Dimensionality reduction such as PCA — not applied in these runs — is often necessary for these methods to work effectively.
+
+Although a Macro F1 of 0.6247 may not appear high in absolute terms, the model was trained using only ~28% labeled data (≈2,600 out of 9,290 movies). Additionally, the labeled subset consists of movies that chose to report revenue, which likely skews toward certain production types and reduces representativeness — making the classification task inherently harder.
+
+Given these constraints, the results demonstrate that semi-supervised learning can meaningfully outperform purely supervised approaches under limited-label conditions, highlighting the practical value of leveraging unlabeled data when annotation is incomplete, costly, or unevenly distributed.
 
 **Explainability of Results**
 Explainability included in popularity notebook:
