@@ -1,4 +1,4 @@
-# TMDB Movie Success Prediction — One-Page Presentation Summary
+# TMDB Movie Success Prediction - One-Page Presentation Summary
 
 ## Project Goal
 Build a pre-release decision-support system that predicts:
@@ -74,3 +74,5 @@ Build a pre-release decision-support system that predicts:
 1. Add mandatory temporal CV to reduce split and drift sensitivity.
 2. Add uncertainty outputs (intervals/calibration) in the app.
 3. Add automated feature-parity and artifact compatibility tests.
+4. Expanding the dataset by collecting more movies with complete revenue information, or integrating additional databases to fill missing revenue values and reduce bias from incomplete records.
+
