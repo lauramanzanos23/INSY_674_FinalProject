@@ -119,28 +119,25 @@ EDA summary:
 3. Total features (modeling set): 52
 
 2) Raw features
-| Groups | Categorical variables | Numerical variables |
-|---|---|---|
-| Feature name | Title, Release date, Original language, Status, overview, Genres, Keywords, Director name, Director department, Actor(1-5) name, Actor(1-5) character | Runtime, Popularity, Vote average, Vote count, Budget, Revenue, Director id, Director gender, Director popularity, Actor(1-5) id, Actor(1-5) gender, Cast pop mean, Cast pop max |
+- **Categorical:** Title, Release date, Original language, Status, Overview, Genres, Keywords, Director name, Director department, Actor(1–5) name, Actor(1–5) character
+- **Numerical:** Runtime, Popularity, Vote average, Vote count, Budget, Revenue, Director ID, Director gender, Director popularity, Actor(1–5) ID, Actor(1–5) gender, Cast pop mean, Cast pop max
 
 3) Missing values
-| Feature name | Missing values |
-|---|---:|
-| runtime | 457 |
-| vote_average | 1642 |
-| vote_count | 1640 |
-| budget | 6527 |
-| revenue | 6686 |
-| cast_pop_mean | 222 |
-| cast_pop_max | 222 |
-| director_gender | 2285 |
-| actor1 missing | 225 |
-| actor2 missing | 384 |
-| actor3 missing | 681 |
-| actor4 missing | 1036 |
-| actor5 missing | 1479 |
-| genres | 489 |
-| keywords | 3238 |
+- `runtime`: 457
+- `vote_average`: 1,642
+- `vote_count`: 1,640
+- `budget`: 6,527
+- `revenue`: 6,686
+- `cast_pop_mean`: 222
+- `cast_pop_max`: 222
+- `director_gender`: 2,285
+- `actor1`: 225
+- `actor2`: 384
+- `actor3`: 681
+- `actor4`: 1,036
+- `actor5`: 1,479
+- `genres`: 489
+- `keywords`: 3,238
 
 4) Distribution of log target variables
 Revenue
