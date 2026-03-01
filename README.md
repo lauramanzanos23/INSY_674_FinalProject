@@ -198,7 +198,7 @@ Popularity notebook:
 1. `models/PopularityModelComparison.ipynb`
 
 Revenue-tier notebook:
-1. `models/SemiSupervisedModels_V2.ipynb`
+1. `models/SemiSupervisedModels_Final.ipynb`
 
 Regression models:
 1. Dummy, Linear Regression, RidgeCV.
@@ -220,9 +220,11 @@ Evaluation setup (popularity):
 4. Ablation: raw target vs `log1p(popularity)` with back-transform (`expm1`) for comparable scale.
 
 Evaluation setup (revenue tier):
-1. Train/holdout split (80/20 on labeled data only, stratified).
-2. Metrics: macro F1 (primary), accuracy, precision, recall.
-3. Confusion matrix diagnostics.
+1. **60% train / 20% validation / 20% test** split on labeled data only (stratified).
+2. Scaler and PCA fitted on train only — applied to val, test, and unlabeled.
+3. Model selection based on **validation** Macro F1; test set evaluated once at the end.
+4. Metrics: macro F1 (primary), accuracy, precision, recall.
+5. Confusion matrix diagnostics.
 
 ---
 
@@ -232,7 +234,7 @@ Selection logic implemented in exporter:
 
 Current exported models used by app:
 1. Popularity model: Gradient Boosting with `log1p` target transform.
-2. Revenue-tier model: best available SSL model from `SemiSupervisedModels_V2`.
+2. Revenue-tier model: best available SSL model from `SemiSupervisedModels_Final`.
 
 Exported artifacts:
 1. `models/popularity_best_model.pkl`
@@ -348,7 +350,7 @@ Final model SHAP summary
 ![Final model SHAP](docs/figures/PopularityModelComparison_files/PopularityModelComparison_40_1.png)
 
 Best SSL confusion matrix
-![SSL confusion matrix](docs/figures/SemiSupervisedModels_V2_files/SemiSupervisedModels_V2_41_1.png)
+![SSL confusion matrix](docs/figures/SemiSupervisedModels_Final_files/best_ssl_confusion_matrix.png)
 
 **Threats to Validity**
 
@@ -424,4 +426,4 @@ Current app outputs:
 ---
 
 **Key Files**
-1. `notebooks/DataExtraction.ipynb`: TMDB ingestion.\n2. `notebooks/FeatureEngineering.ipynb`: feature pipeline.\n3. `models/PopularityModelComparison.ipynb`: supervised modeling.\n4. `models/SemiSupervisedModels_V2.ipynb`: SSL modeling.\n5. `models/export_best_models.py`: model export for app usage.
+1. `notebooks/DataExtraction.ipynb`: TMDB ingestion.\n2. `notebooks/FeatureEngineering.ipynb`: feature pipeline.\n3. `models/PopularityModelComparison.ipynb`: supervised modeling.\n4. `models/SemiSupervisedModels_Final.ipynb`: SSL modeling (60/20/20 train/val/test).\n5. `models/export_best_models.py`: model export for app usage.
