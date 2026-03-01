@@ -4,16 +4,8 @@ from pathlib import Path
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.base import clone
-from sklearn.ensemble import (
-    ExtraTreesRegressor,
-    GradientBoostingRegressor,
-    HistGradientBoostingRegressor,
-)
-from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import train_test_split
+from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.pipeline import Pipeline
-from xgboost import XGBRegressor
 
 
 RANDOM_STATE = 42
@@ -38,75 +30,17 @@ def build_popularity_model() -> tuple[Pipeline, list[str], str, str]:
     y_pop = df_pop["popularity"]
     y_pop_log_all = np.log1p(y_pop)
 
-    # Match notebook final selection logic:
-    # choose best log-target model by holdout RMSE on original scale.
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_pop, y_pop, test_size=0.2, random_state=RANDOM_STATE
-    )
-    y_train_log = np.log1p(y_train)
-
-    candidates = {
-        "Gradient Boosting": Pipeline(
-            [("model", GradientBoostingRegressor(random_state=RANDOM_STATE))]
-        ),
-        "Hist Gradient Boosting": Pipeline(
-            [("model", HistGradientBoostingRegressor(random_state=RANDOM_STATE))]
-        ),
-        "Extra Trees": Pipeline(
-            [
-                (
-                    "model",
-                    ExtraTreesRegressor(
-                        n_estimators=400,
-                        random_state=RANDOM_STATE,
-                        n_jobs=1,
-                    ),
-                )
-            ]
-        ),
-        "XGBoost": Pipeline(
-            [
-                (
-                    "model",
-                    XGBRegressor(
-                        n_estimators=400,
-                        learning_rate=0.05,
-                        max_depth=6,
-                        subsample=0.85,
-                        colsample_bytree=0.85,
-                        objective="reg:squarederror",
-                        random_state=RANDOM_STATE,
-                        n_jobs=1,
-                    ),
-                )
-            ]
-        ),
-    }
-
-    scores = []
-    for model_name, pipe in candidates.items():
-        m = clone(pipe)
-        m.fit(X_train, y_train_log)
-        pred = np.expm1(m.predict(X_test))
-        pred = np.clip(pred, 0, None)
-        rmse = float(np.sqrt(mean_squared_error(y_test, pred)))
-        scores.append((model_name, rmse))
-
-    scores.sort(key=lambda x: x[1])
-    best_name, best_rmse = scores[0]
-    print("Popularity log-target holdout RMSE ranking:")
-    for name, rmse in scores:
-        print(f"  {name}: {rmse:.4f}")
-    print(f"Selected popularity model: {best_name} (target transform: log1p)")
-    print(f"Selected popularity holdout RMSE: {best_rmse:.4f}")
-
-    pop_model = clone(candidates[best_name])
+    # Use final selected popularity model from PopularityModelComparison notebook:
+    # Gradient Boosting trained on log1p(popularity), then expm1 at inference.
+    best_name = "Gradient Boosting"
+    pop_model = Pipeline([("model", GradientBoostingRegressor(random_state=RANDOM_STATE))])
     pop_model.fit(X_pop, y_pop_log_all)
+    print(f"Selected popularity model: {best_name} (target transform: log1p)")
     return pop_model, pop_feature_cols, "log1p", best_name
 
 
 def build_ssl_metadata() -> tuple[object, object, list[str]]:
-    # Mirror SemiSupervisedModels_V2 feature policy.
+    # Mirror SemiSupervisedModels_Final feature policy.
     ssl_df = pd.read_csv(SSL_DATA)
     base_leakage_keywords = ["vote", "review", "rating", "revenue"]
     allowed_budget_features = {"has_budget", "log_budget", "budget_effective"}
@@ -166,7 +100,7 @@ def main() -> None:
         "popularity_target_transform": pop_target_transform,
         "popularity_model_name": pop_model_name,
         "ssl_feature_cols": ssl_feature_cols,
-        "ssl_model_source_notebook": "SemiSupervisedModels_V2.ipynb",
+        "ssl_model_source_notebook": "SemiSupervisedModels_Final.ipynb",
         "ssl_tier_labels": {
             0: "Low",
             1: "Medium",
