@@ -10,6 +10,9 @@ Primary decision support goals:
 2. Predict revenue tier (Low, Medium, High, Blockbuster) with semi-supervised learning.
 3. Support pre-release what-if decisions in a Streamlit app.
 
+**Project Summary**
+This project builds a pre-release decision-support pipeline using TMDB data (2010–2025). It engineers leakage-safe features, benchmarks supervised regression models for popularity, and applies semi-supervised learning to improve revenue-tier prediction with limited labels. The best-performing models are exported and used in a Streamlit UI to provide interpretable signals for greenlighting, casting, budgeting, and release timing.
+
 ---
 
 **Context and Motivation**
@@ -56,7 +59,6 @@ INSY 674 FinalProject/
 ├── models/
 │   ├── PopularityModelComparison.ipynb
 │   ├── SemiSupervisedModels.ipynb
-│   ├── SemiSupervisedModels_V2.ipynb
 │   ├── export_best_models.py
 │   ├── popularity_best_model.pkl
 │   ├── ssl_best_model.pkl
@@ -200,6 +202,8 @@ Popularity notebook:
 Revenue-tier notebook:
 1. `models/SemiSupervisedModels_Final.ipynb`
 
+Note: All SSL results reported below are from `models/SemiSupervisedModels_Final.ipynb`.
+
 Regression models:
 1. Dummy, Linear Regression, RidgeCV.
 2. Random Forest, Extra Trees, Gradient Boosting, HistGradientBoosting.
@@ -278,10 +282,7 @@ Outcomes and error types:
 1. Regression errors: under/overprediction of popularity.
 2. Classification errors: false optimism (predict high tier when low) and false pessimism.
 
-Statistical communication:
-1. Causal section reports uncertainty via confidence intervals (DR estimate).
-2. P-values are not the primary model-selection criterion; predictive metrics and robust CV are primary.
-3. Multiple testing / p-hacking mitigation: holdout discipline, repeated CV, and explicit ablations.
+ 
 
 **Data**
 Data sources and transformations are documented in:
@@ -437,3 +438,8 @@ Current app outputs:
 
 **Key Files**
 1. `notebooks/DataExtraction.ipynb`: TMDB ingestion.\n2. `notebooks/FeatureEngineering.ipynb`: feature pipeline.\n3. `models/PopularityModelComparison.ipynb`: supervised modeling.\n4. `models/SemiSupervisedModels_Final.ipynb`: SSL modeling (60/20/20 train/val/test).\n5. `models/export_best_models.py`: model export for app usage.
+
+---
+
+**Executive Summary**
+This project builds a pre-release decision-support system for movie success using TMDB data (2010–2025). It engineers leakage-safe features, benchmarks supervised regression models for popularity, and applies semi-supervised learning to improve revenue-tier prediction where labels are scarce. The final models (Gradient Boosting with `log1p(popularity)` and tuned Self-Training for revenue tiers) outperform baselines and are exported into a Streamlit UI for practical use. The work delivers actionable business value by guiding greenlighting, casting, budgeting, and release-timing decisions while outlining risks and next steps for production monitoring.
