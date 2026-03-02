@@ -199,15 +199,16 @@ Popularity notebook:
 
 `PopularityModelComparison.ipynb` benchmarks a progression of baseline and advanced regression models (Dummy, Linear/Ridge, tree ensembles, and boosting methods including XGBoost/LightGBM) to predict movie popularity from pre-release features. Model quality is assessed with an 80/20 holdout strategy plus cross-validation using RMSE, MAE, and R2, and includes an ablation between raw-target training and `log1p(popularity)` training with back-transformed predictions for fair comparison. Interpretation is built into the notebook through feature-importance diagnostics and a SHAP analysis block for the selected final model, so performance is tied directly to the strongest pre-release drivers of predicted popularity.
 
-Revenue-tier notebook:
-1. `models/SemiSupervisedModels_Final.ipynb`
-
-Note: All SSL results reported below are from `models/SemiSupervisedModels_Final.ipynb`.
-
 Regression models:
 1. Dummy, Linear Regression, RidgeCV.
 2. Random Forest, Extra Trees, Gradient Boosting, HistGradientBoosting.
 3. XGBoost, LightGBM (availability-dependent).
+
+Revenue-tier notebook:
+2. `models/SemiSupervisedModels_Final.ipynb`
+
+Note: All SSL results reported below are from `models/SemiSupervisedModels_Final.ipynb`.
+
 
 Semi-supervised models:
 1. Self Training with tuned Random Forest base estimator.
