@@ -3,6 +3,8 @@ Predicting Movie Success Using Pre-Release Data
 
 Group 1: Laura Manzanos Zuriarrain, Maria Jose Beletanga, Emmanuel Okerein, Hank Shao, Ibukun Adeleye
 
+App link: https://tmdbmoviesblockbuster.streamlit.app/
+
 This repository implements an end-to-end data science and ML workflow to estimate movie outcomes before release using TMDB-derived metadata.
 
 Primary decision support goals:
@@ -58,7 +60,7 @@ INSY 674 FinalProject/
 │   └── ssl_model_comparison.csv
 ├── models/
 │   ├── PopularityModelComparison.ipynb
-│   ├── SemiSupervisedModels.ipynb
+│   ├── SemiSupervisedModels_Final.ipynb
 │   ├── export_best_models.py
 │   ├── popularity_best_model.pkl
 │   ├── ssl_best_model.pkl
@@ -66,7 +68,6 @@ INSY 674 FinalProject/
 │   └── model_metadata.pkl
 ├── app/
 │   ├── app_final.py
-│   └── app_mockup.py
 ├── docs/
 │   └── figures/
 └── requirements.txt
@@ -381,30 +382,6 @@ Interpretation & Deployment
 - Results reflect associations, not causal effects.
 - Production deployment requires monitoring and drift control.
 
-**Conclusion**
-This project demonstrates that **pre-release metadata can meaningfully predict movie outcomes**, even under incomplete revenue labels. The supervised popularity model materially improves over baseline error, and the semi-supervised Self‑Training model delivers the strongest macro‑F1 for revenue tiers. These results provide **actionable, interpretable signals** that can support greenlighting, casting, and release‑strategy decisions, while acknowledging the need for continued monitoring, temporal robustness, and drift control in production.
-
-Business Insight
-- Release timing, budget-related proxies, and talent popularity are consistently strong predictors.
-- Results provide interpretable signals for greenlighting, marketing, and release strategy decisions.
-
-Business Value Relevance
-- **Greenlighting:** rank projects by expected popularity and revenue tier to prioritize investment.
-- **Budget planning:** use sensitivity on budget-related proxies and timing to shape ROI-focused scenarios.
-- **Casting strategy:** quantify talent effects using cast/director popularity signals.
-- **Marketing and release timing:** identify seasons and release windows that correlate with stronger outcomes.
-
-Next Steps
-- Improve temporal robustness.
-- Incorporate more pre-release variables such as marketing intensity, distribution scope, and social signals.
-- Add temporal CV as required model-selection criterion.
-- Add uncertainty intervals and drift monitoring in production.
-
-**Lessons Learned**
-- Semi-supervised learning adds value when labels are scarce.
-- Feature engineering matters more than model complexity alone.
-- AI is a tool, not a replacement for reasoning.
-
 ---
 
 **5.10 Launching, Monitoring and Maintenance**
@@ -446,3 +423,27 @@ Current app outputs:
 
 **Executive Summary**
 This project builds a pre-release decision-support system for movie success using TMDB data (2010–2025). It engineers leakage-safe features, benchmarks supervised regression models for popularity, and applies semi-supervised learning to improve revenue-tier prediction where labels are scarce. The final models (Gradient Boosting with `log1p(popularity)` and tuned Self-Training for revenue tiers) outperform baselines and are exported into a Streamlit UI for practical use. The work delivers actionable business value by guiding greenlighting, casting, budgeting, and release-timing decisions while outlining risks and next steps for production monitoring.
+
+**Conclusion**
+This project demonstrates that **pre-release metadata can meaningfully predict movie outcomes**, even under incomplete revenue labels. The supervised popularity model materially improves over baseline error, and the semi-supervised Self‑Training model delivers the strongest macro‑F1 for revenue tiers. These results provide **actionable, interpretable signals** that can support greenlighting, casting, and release‑strategy decisions, while acknowledging the need for continued monitoring, temporal robustness, and drift control in production.
+
+Business Insight
+- Release timing, budget-related proxies, and talent popularity are consistently strong predictors.
+- Results provide interpretable signals for greenlighting, marketing, and release strategy decisions.
+
+Business Value Relevance
+- **Greenlighting:** rank projects by expected popularity and revenue tier to prioritize investment.
+- **Budget planning:** use sensitivity on budget-related proxies and timing to shape ROI-focused scenarios.
+- **Casting strategy:** quantify talent effects using cast/director popularity signals.
+- **Marketing and release timing:** identify seasons and release windows that correlate with stronger outcomes.
+
+Next Steps
+- Improve temporal robustness.
+- Incorporate more pre-release variables such as marketing intensity, distribution scope, and social signals.
+- Add temporal CV as required model-selection criterion.
+- Add uncertainty intervals and drift monitoring in production.
+
+**Lessons Learned**
+- Semi-supervised learning adds value when labels are scarce.
+- Feature engineering matters more than model complexity alone.
+- AI is a tool, not a replacement for reasoning.
