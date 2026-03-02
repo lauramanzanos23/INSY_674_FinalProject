@@ -368,23 +368,6 @@ Final model SHAP summary
 Best SSL confusion matrix
 ![SSL confusion matrix](data/best_ssl_confusion_matrix.png)
 
-**Threats to Validity**
-
-Data & Distribution
-- TMDB may not represent all markets or distribution channels.
-- Revenue missingness may be systematic, affecting SSL assumptions.
-- Temporal shifts may reduce future generalization.
-
-Modeling & Evaluation
-- Popularity and revenue distributions are skewed.
-- Model ranking depends on validation strategy.
-
-Leakage & Feature Risk
-- Latent post-release proxies may remain despite filtering.
-
-Interpretation & Deployment
-- Results reflect associations, not causal effects.
-- Production deployment requires monitoring and drift control.
 
 ---
 
@@ -440,6 +423,25 @@ Business Value Relevance
 - **Budget planning:** use sensitivity on budget-related proxies and timing to shape ROI-focused scenarios.
 - **Casting strategy:** quantify talent effects using cast/director popularity signals.
 - **Marketing and release timing:** identify seasons and release windows that correlate with stronger outcomes.
+
+**Threats to Validity**
+
+Data & Distribution
+- TMDB may not represent all markets or distribution channels.
+- Revenue missingness may be systematic, affecting SSL assumptions.
+- Temporal shifts may reduce future generalization.
+
+Modeling & Evaluation
+- Popularity and revenue distributions are skewed.
+- Model ranking depends on validation strategy.
+
+Leakage & Feature Risk
+- Latent post-release proxies may remain despite filtering.
+
+Interpretation & Deployment
+- Results reflect associations, not causal effects.
+- Production deployment requires monitoring and drift control.
+
 
 Next Steps
 - Improve temporal robustness.
